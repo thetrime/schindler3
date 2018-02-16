@@ -8,10 +8,30 @@
 
 import Foundation
 
-class Item {
+class Item : Hashable, CustomStringConvertible {
     let name: String;
     
     init(name: String) {
         self.name = name;
+    }
+    
+    //MARK: CustomStringConvertible
+    var description: String {
+        return "Item: \(self.name)";
+    }
+    
+    //MARK: Hashable
+    var hashValue: Int {
+        get {
+            return name.hashValue;
+        }
+    }
+    
+    static func == (lhs: Item, rhs: Item) -> Bool {
+        return lhs.name == rhs.name;
+    }
+    
+    static func < (lhs: Item, rhs: Item) -> Bool {
+        return lhs.name < rhs.name;
     }
 }

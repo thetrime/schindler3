@@ -13,19 +13,74 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     //MARK: Properties
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
-    var items = [Item]();
+    private var items = [Item]();
+    private var itemLocations: [String: [Item]] = [:];
+    private var sections: [String] = [];
+    
+    private var currentStore: Store! {
+        didSet {
+            determineItemLocations();
+        }
+    }
     
     //MARK: Methods
     private func loadItems() {
-        for i in 0...5 {
-            let item = Item(name:"Foo Item \(i)");
-            items.append(item);
-        }
+        // FIXME: Implement this properly
     }
+    
+    private func loadStoreList() {
+        // FIXME: Implement this
+    }
+    
+    private func determineItemLocations() {
+        var locations: [String: [Item]] = [:];
+        for item in items {
+            if let aisle = currentStore.getLocationOf(item) {
+                if locations[aisle] != nil {
+                    locations[aisle]?.append(item);
+                } else {
+                    locations[aisle] = [item];
+                }
+            }
+            else if locations["Unknown"]  != nil {
+                locations["Unknown"]?.append(item)
+            } else {
+                locations["Unknown"] = [item];
+            }
+        }
+        for (location, itemList) in locations {
+            locations[location] = itemList.sorted(by: <);
+        }
+        itemLocations = locations;
+        print("itemLocations: \(itemLocations)");
+        sections = itemLocations.keys.sorted();
+    }
+    
+    private func determineStore() {
+        // FIXME: Implement this properly
+        currentStore = Store(name:"Home");
+        let cat = Item(name:"cat");
+        let potato = Item(name:"potato")
+        let banjo = Item(name:"banjo")
+        let cabbage = Item(name:"cabbage");
+        items.append(cat);
+        items.append(banjo);
+        items.append(cabbage);
+        items.append(potato);
+        
+        currentStore?.setItemLocation(cat, to: "Lounge");
+        currentStore?.setItemLocation(potato, to:"Kitchen");
+        currentStore?.setItemLocation(banjo, to: "Lounge");
+        determineItemLocations();
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.tableFooterView = UIView();
         loadItems();
-        // Do any additional setup after loading the view.
+        loadStoreList();
+        determineStore();
     }
 
     override func didReceiveMemoryWarning() {
@@ -35,11 +90,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //MARK: UITableViewDelegate
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1;
+        print("Number of sections: \(itemLocations)");
+        return itemLocations.keys.count;
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return items.count;
+        print("Number of rows in section \(section): \(itemLocations[sections[section]]!.count)");
+        return itemLocations[sections[section]]!.count;
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -47,10 +104,19 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? ListItemTableViewCell  else {
             fatalError("The dequeued cell is not an instance of ListItemTableViewCell.")
         }
-        let item = items[indexPath.row];
-        cell.label.text = item.name;
+        let section = sections[indexPath.section];
+        guard let items = itemLocations[section] else {
+            fatalError("Request for non-existent section \(section)?");
+        }
+        print("Request for item at section \(indexPath.section), row \(indexPath.row). This section contains \(items)");
+        cell.label.text = items[indexPath.row].name;
         return cell;
     }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return sections[section];
+    }
+    
 
     /*
     // MARK: - Navigation

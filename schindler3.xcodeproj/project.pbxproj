@@ -14,6 +14,7 @@
 		F4D665F620372BE10017E0CA /* ListItemTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */; };
 		F4DE162820373704003C6A3B /* ListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE162720373704003C6A3B /* ListViewController.swift */; };
 		F4DE162A2037378B003C6A3B /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE16292037378B003C6A3B /* Item.swift */; };
+		F4DE162C20373BDD003C6A3B /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE162B20373BDD003C6A3B /* Store.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListItemTableViewCell.swift; sourceTree = "<group>"; };
 		F4DE162720373704003C6A3B /* ListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListViewController.swift; sourceTree = "<group>"; };
 		F4DE16292037378B003C6A3B /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		F4DE162B20373BDD003C6A3B /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +63,7 @@
 				F4D665E3203729280017E0CA /* AppDelegate.swift */,
 				F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */,
 				F4DE162720373704003C6A3B /* ListViewController.swift */,
+				F4DE162B20373BDD003C6A3B /* Store.swift */,
 				F4DE16292037378B003C6A3B /* Item.swift */,
 				F4D665E7203729280017E0CA /* Main.storyboard */,
 				F4D665EA203729280017E0CA /* Assets.xcassets */,
@@ -142,6 +145,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4DE162C20373BDD003C6A3B /* Store.swift in Sources */,
 				F4DE162A2037378B003C6A3B /* Item.swift in Sources */,
 				F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */,
 				F4DE162820373704003C6A3B /* ListViewController.swift in Sources */,
