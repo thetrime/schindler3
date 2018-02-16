@@ -5,6 +5,14 @@
 //  Created by Matt Lilley on 17/02/18.
 //  Copyright © 2018 Matt Lilley. All rights reserved.
 //
+// Notes:
+//   Each store will be represented by a file. This means it's possible to have items in a store that we don't know about yet. Such items will be deleted from the store if the store is loaded and then saved.
+//   We only need to load the locations of the current store into memory.
+//   Deleting an item would be expensive if we had to delete the item from each store. Instead we do this lazily.
+//   Each store contains a dictionary of aisleName: String -> [itemName: String] plus a GPS location
+//   Any item which is on the list but is not in any aisle is in the Unknown section
+//   The user's list is an array [item: Item]
+//   An item has a name, and an optional description
 
 import UIKit
 
