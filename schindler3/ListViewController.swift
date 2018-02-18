@@ -53,8 +53,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 deletes.insert(index0);
                 index0+=1;
                 s0 = i0.next();
-            }
-            else if (s0! < s1!) {
+            } else if (s0! < s1!) {
                 // s0 has been deleted
                 deletes.insert(index0);
                 index0+=1;
@@ -120,9 +119,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.beginUpdates();
         for sectionTitle in Set(sections).intersection(Set(newSections)) {
             let (deletedRows, insertedRows) = changesBetween(locations[sectionTitle]!, and:newLocations[sectionTitle]!);
-            tableView.deleteRows(at: deletedRows.map({IndexPath.init(row: $0, section:sections.index(of: sectionTitle)!)}), with:.automatic);
-            tableView.insertRows(at: insertedRows.map({IndexPath.init(row: $0, section:newSections.index(of: sectionTitle)!)}), with:.automatic);
-            // FIXME: If we have a temporary item, do not delete and insert it, instead update the row.
+            let modifiedRows = Set(deletedRows).intersection(Set(insertedRows));
+            let onlyDeletedRows = Set(deletedRows).subtracting(modifiedRows);
+            let onlyInsertedRows = Set(insertedRows).subtracting(modifiedRows);
+            tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:sections.index(of: sectionTitle)!)}), with:.automatic);
+            tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:newSections.index(of: sectionTitle)!)}), with:.automatic);
+            tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sections.index(of: sectionTitle)!)}), with:.automatic);
         }
         tableView.deleteSections(deletedSections, with:.automatic);
         tableView.insertSections(insertedSections, with:.automatic);
