@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F40185EE203B1DAF004107FC /* ListButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40185ED203B1DAF004107FC /* ListButton.swift */; };
 		F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D665E3203729280017E0CA /* AppDelegate.swift */; };
 		F4D665E9203729280017E0CA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4D665E7203729280017E0CA /* Main.storyboard */; };
 		F4D665EB203729280017E0CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4D665EA203729280017E0CA /* Assets.xcassets */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		F40185ED203B1DAF004107FC /* ListButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListButton.swift; sourceTree = "<group>"; };
 		F4D665E0203729280017E0CA /* schindler3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = schindler3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4D665E3203729280017E0CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4D665E8203729280017E0CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -62,6 +64,7 @@
 			children = (
 				F4D665E3203729280017E0CA /* AppDelegate.swift */,
 				F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */,
+				F40185ED203B1DAF004107FC /* ListButton.swift */,
 				F4DE162720373704003C6A3B /* ListViewController.swift */,
 				F4DE162B20373BDD003C6A3B /* Store.swift */,
 				F4DE16292037378B003C6A3B /* Item.swift */,
@@ -148,6 +151,7 @@
 				F4DE162C20373BDD003C6A3B /* Store.swift in Sources */,
 				F4DE162A2037378B003C6A3B /* Item.swift in Sources */,
 				F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */,
+				F40185EE203B1DAF004107FC /* ListButton.swift in Sources */,
 				F4DE162820373704003C6A3B /* ListViewController.swift in Sources */,
 				F4D665F620372BE10017E0CA /* ListItemTableViewCell.swift in Sources */,
 			);

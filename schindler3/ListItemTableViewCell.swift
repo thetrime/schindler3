@@ -11,7 +11,7 @@ import UIKit
 class ListItemTableViewCell: UITableViewCell {
     //MARK: Properties
     @IBOutlet weak var label: UILabel!
-    
+    @IBOutlet weak var button: ListButton!
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

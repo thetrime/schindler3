@@ -5,6 +5,13 @@
 //  Created by Matt Lilley on 17/02/18.
 //  Copyright © 2018 Matt Lilley. All rights reserved.
 //
+// TODO List:
+//    Implement the add/got it buttons
+//    Implement the store/aisle configurations
+//    Add GPS info
+//    Save the state to disk after modifications
+//    Queue the messages to be sent
+//    Send and process messages when network is online
 
 import UIKit
 
@@ -14,13 +21,16 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     private var items = [String]();
+    private var currentList = [String]();
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
+    private var temporaryItemRow: Int?;
+    private var searchFilter: String = "";
     
     private var currentStore: Store! {
         didSet {
             navigationItem.title = currentStore.name;
-            applyTableFilter();
+            updateTable(after:) {}
         }
     }
     
@@ -73,9 +83,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         return (deletes, inserts);
     }
     
-    private func applyTableFilter() {
-        let filter = (searchBar.text ?? "").lowercased();
-        let temporaryItem = searchBar.text ?? "";
+    private func updateTableView() {
+        let temporaryItem = searchFilter;
+        let filter = searchFilter.lowercased();
         var newLocations: [String: [String]] = [:];
         // The list has a temporary item if the search bar is not empty and the thing in the search bar doesn't match anything in the list
         let hasTemporaryItem = filter != "" && !items.contains(where:{$0.caseInsensitiveCompare(filter) == .orderedSame})
@@ -102,29 +112,39 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             newLocations[location] = itemList.sorted(by: <);
         }
         let newSections = newLocations.keys.sorted();
+        if (hasTemporaryItem) {
+            // FIXME: Nope. The new item could be in any section!
+            temporaryItemRow = newLocations["Unknown"]?.index(of:temporaryItem);
+        } else {
+            temporaryItemRow = nil;
+        }
         
-        // Now apply the table updates by comparing newLocations and locations, and newSections and sections
-        //let deletedSections: [String] = sections.filter { e in !newSections.contains(e) };
-        
+        // Table update is hard to get your head around. The general idea is:
+        // * First all the row deletes are processed
+        // * Next, all the section deletes are processed
+        // * Then, the row inserts are processed
+        // * Finally, if any sections have been added they are loaded
         
         let (deletedSections, insertedSections) = changesBetween(sections, and:newSections);
+        print("Updated Locations: \(newLocations)")
         print("Sections is changing from \(sections) to \(newSections), and in the process, changing as follows:")
-        print("Deleted sections: \(deletedSections)");
-        print("Inserted sections: \(insertedSections)");
-        for section in Set(sections).intersection(Set(newSections)) {
-            let (deletedRows, insertedRows) = changesBetween(locations[section]!, and:newLocations[section]!);
-            print("Section \(section) has deleted \(deletedRows) and inserted \(insertedRows)")
-        }
-        print("Locations: \(newLocations)")
-        tableView.beginUpdates();
+        print("   * Deleted sections: \(deletedSections)");
+        print("   * Inserted sections: \(insertedSections)");
+        
         for sectionTitle in Set(sections).intersection(Set(newSections)) {
             let (deletedRows, insertedRows) = changesBetween(locations[sectionTitle]!, and:newLocations[sectionTitle]!);
+            let sectionIndex = sections.index(of: sectionTitle)!;
+            let newSectionIndex = newSections.index(of: sectionTitle)!
             let modifiedRows = Set(deletedRows).intersection(Set(insertedRows));
             let onlyDeletedRows = Set(deletedRows).subtracting(modifiedRows);
             let onlyInsertedRows = Set(insertedRows).subtracting(modifiedRows);
-            tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:sections.index(of: sectionTitle)!)}), with:.automatic);
-            tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:newSections.index(of: sectionTitle)!)}), with:.automatic);
-            tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sections.index(of: sectionTitle)!)}), with:.automatic);
+            print("   * Section \(sectionTitle) (was index \(sectionIndex) but is now \(newSectionIndex))");
+            print("      * Deleted \(onlyDeletedRows) from section \(sectionIndex)");
+            print("      * Inserted \(onlyInsertedRows) to section \(newSectionIndex)");
+            print("      * Updated \(modifiedRows) on section \(sectionIndex)");
+            tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.automatic);
+            tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:newSectionIndex)}), with:.automatic);
+            tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.automatic);
         }
         tableView.deleteSections(deletedSections, with:.automatic);
         tableView.insertSections(insertedSections, with:.automatic);
@@ -137,22 +157,22 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     private func determineStore() {
         // FIXME: Implement this properly
-        currentStore = Store(name:"Home");
-        items.append("cat");
-        items.append("banjo");
-        items.append("cabbage");
-        items.append("potato");
-        
-        currentStore?.setItemLocation("cat", to: "Lounge");
-        currentStore?.setItemLocation("potato", to:"Kitchen");
-        currentStore?.setItemLocation("banjo", to: "Lounge");
-        applyTableFilter();
-        
+        updateTable(after:) {
+            currentStore = Store(name:"Home");
+            items.append("cat");
+            items.append("banjo");
+            items.append("cabbage");
+            items.append("potato");
+            
+            currentStore?.setItemLocation("cat", to: "Lounge");
+            currentStore?.setItemLocation("potato", to:"Kitchen");
+            currentStore?.setItemLocation("banjo", to: "Lounge");
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.tableFooterView = UIView();
+       // tableView.tableFooterView = UIView();
         loadItems();
         loadStoreList();
         determineStore();
@@ -185,6 +205,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         print("Request for item at section \(indexPath.section), row \(indexPath.row). This section contains \(items)");
         cell.label.text = items[indexPath.row];
+        if (section == "Unknown" && indexPath.row == temporaryItemRow) {
+            cell.button.type = .add(items[indexPath.row])
+        } else {
+            cell.button.type = .get(items[indexPath.row])
+        }
+        cell.button.addTarget(self, action:#selector(ListViewController.buttonPressed(button:)), for: .touchUpInside);
         return cell;
     }
     
@@ -192,9 +218,30 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         return sections[section];
     }
     
+    private func updateTable(after: () -> Void) {
+        tableView.beginUpdates()
+        after();
+        updateTableView();
+    }
+    
+    // MARK: Button handler
+    @objc func buttonPressed(button: ListButton) {
+        updateTable(after:) {
+            if case .add(let item) = button.type {
+                items.append(item);
+                searchBar.text = "";
+                //tableView.reloadRows(at: [IndexPath(row: ?, section: ?)]);
+            } else if case .get(let item) = button.type {
+                items = items.filter( { $0 != item } );
+            }
+        }
+    }
+    
     // MARK: UISearchBarDelegate
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        applyTableFilter();
+        updateTable(after:) {
+            searchFilter = searchText;
+        }
     }
 
     /*
