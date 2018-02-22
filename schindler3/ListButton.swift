@@ -12,9 +12,12 @@ class ListButton: UIButton {
     var item: String?;
     enum ButtonType {
         case add(String);
-        case get(String)
-        
+        case get(String);
+        case set(String);
     }
+    var row: Int?;
+    var section: Int?;
+    
     var type: ButtonType = .add("Unknown") {
         didSet {
             switch (type) {
@@ -22,6 +25,8 @@ class ListButton: UIButton {
                 setTitle("Add", for:.normal);
             case .get(_):
                 setTitle("Got it", for:.normal);
+            case .set(_):
+                setTitle("Here", for:.normal);
             }
         }
     }

@@ -16,6 +16,8 @@
 		F4DE162820373704003C6A3B /* ListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE162720373704003C6A3B /* ListViewController.swift */; };
 		F4DE162A2037378B003C6A3B /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE16292037378B003C6A3B /* Item.swift */; };
 		F4DE162C20373BDD003C6A3B /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DE162B20373BDD003C6A3B /* Store.swift */; };
+		F4EB81C8203C448C003625D0 /* LocationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EB81C7203C448C003625D0 /* LocationViewController.swift */; };
+		F4EB81CA203C51DD003625D0 /* Diff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EB81C9203C51DD003625D0 /* Diff.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		F4DE162720373704003C6A3B /* ListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListViewController.swift; sourceTree = "<group>"; };
 		F4DE16292037378B003C6A3B /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		F4DE162B20373BDD003C6A3B /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		F4EB81C7203C448C003625D0 /* LocationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationViewController.swift; sourceTree = "<group>"; };
+		F4EB81C9203C51DD003625D0 /* Diff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diff.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,12 +66,14 @@
 		F4D665E2203729280017E0CA /* schindler3 */ = {
 			isa = PBXGroup;
 			children = (
+				F4EB81C9203C51DD003625D0 /* Diff.swift */,
 				F4D665E3203729280017E0CA /* AppDelegate.swift */,
 				F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */,
 				F40185ED203B1DAF004107FC /* ListButton.swift */,
 				F4DE162720373704003C6A3B /* ListViewController.swift */,
 				F4DE162B20373BDD003C6A3B /* Store.swift */,
 				F4DE16292037378B003C6A3B /* Item.swift */,
+				F4EB81C7203C448C003625D0 /* LocationViewController.swift */,
 				F4D665E7203729280017E0CA /* Main.storyboard */,
 				F4D665EA203729280017E0CA /* Assets.xcassets */,
 				F4D665EC203729280017E0CA /* LaunchScreen.storyboard */,
@@ -154,6 +160,8 @@
 				F40185EE203B1DAF004107FC /* ListButton.swift in Sources */,
 				F4DE162820373704003C6A3B /* ListViewController.swift in Sources */,
 				F4D665F620372BE10017E0CA /* ListItemTableViewCell.swift in Sources */,
+				F4EB81CA203C51DD003625D0 /* Diff.swift in Sources */,
+				F4EB81C8203C448C003625D0 /* LocationViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

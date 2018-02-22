@@ -6,7 +6,6 @@
 //  Copyright © 2018 Matt Lilley. All rights reserved.
 //
 // TODO List:
-//    Implement the add/got it buttons
 //    Implement the store/aisle configurations
 //    Add GPS info
 //    Save the state to disk after modifications
@@ -29,6 +28,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     private var currentStore: Store! {
         didSet {
+            print("setting navigation title");
             navigationItem.title = currentStore.name;
             updateTable(after:) {}
         }
@@ -42,46 +42,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     private func loadStoreList() {
         // FIXME: Implement this
     }
-    
-    private func changesBetween(_ left: [String], and right: [String]) -> (deletes: IndexSet, inserts: IndexSet) {
-        var deletes = IndexSet();
-        var inserts = IndexSet();
-        var i0 = left.makeIterator();
-        var i1 = right.makeIterator();
-        var s0 = i0.next();
-        var s1 = i1.next();
-        var index0 : Int = 0;
-        var index1 : Int = 0;
-        while s0 != nil || s1 != nil {
-            if (s0 == nil) {
-                // s1 (and the rest of i1) has been added
-                inserts.insert(index1)
-                index1+=1;
-                s1 = i1.next();
-            } else if (s1 == nil) {
-                // s0 (and the rest of s0) has been deleted
-                deletes.insert(index0);
-                index0+=1;
-                s0 = i0.next();
-            } else if (s0! < s1!) {
-                // s0 has been deleted
-                deletes.insert(index0);
-                index0+=1;
-                s0 = i0.next();
-            } else if (s0! > s1!) {
-                // s1 has been added
-                inserts.insert(index1);
-                index1+=1;
-                s1 = i1.next();
-            } else if (s0! == s1!) {
-                index0+=1;
-                index1+=1;
-                s0 = i0.next();
-                s1 = i1.next();
-            }
-        }
-        return (deletes, inserts);
-    }
+
     
     private func updateTableView() {
         let temporaryItem = searchFilter;
@@ -90,8 +51,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         // The list has a temporary item if the search bar is not empty and the thing in the search bar doesn't match anything in the list
         let hasTemporaryItem = filter != "" && !items.contains(where:{$0.caseInsensitiveCompare(filter) == .orderedSame})
         for item in hasTemporaryItem ? items + [temporaryItem] : items {
-            if (filter != "" && !item.lowercased().contains(filter.lowercased())) {
+            if (filter != "" && !item.lowercased().contains(filter)) {
                 // The filter is not empty and this item does not match the filter. Do not include it.
+                continue;
+            }
+            if (filter == "" && !currentList.contains(item)) {
+                // The filter IS empty so we only want to display items actually on the current list
+                print("Breaking here for \(item)")
                 continue;
             }
             if let aisle = currentStore.getLocationOf(item) {
@@ -160,13 +126,21 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         updateTable(after:) {
             currentStore = Store(name:"Home");
             items.append("cat");
-            items.append("banjo");
+            items.append("banana");
             items.append("cabbage");
             items.append("potato");
-            
+            items.append("leek");
+            items.append("steamed monkfish liver");
+            items.append("expired spicy fish eggs");
+
+
+            currentList.append("cat");
+            currentList.append("potato");
+            currentList.append("banana");
+
             currentStore?.setItemLocation("cat", to: "Lounge");
             currentStore?.setItemLocation("potato", to:"Kitchen");
-            currentStore?.setItemLocation("banjo", to: "Lounge");
+            currentStore?.setItemLocation("leek", to: "Lounge");
         }
     }
     
@@ -185,6 +159,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     //MARK: UITableViewDelegate
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
+        searchBar.resignFirstResponder();
+    }
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return locations.keys.count;
     }
@@ -205,11 +183,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         print("Request for item at section \(indexPath.section), row \(indexPath.row). This section contains \(items)");
         cell.label.text = items[indexPath.row];
-        if (section == "Unknown" && indexPath.row == temporaryItemRow) {
-            cell.button.type = .add(items[indexPath.row])
+        if (currentList.contains(items[indexPath.row])) {
+            cell.button.type = .get(items[indexPath.row]);
         } else {
-            cell.button.type = .get(items[indexPath.row])
+            cell.button.type = .add(items[indexPath.row]);
         }
+        cell.button.row = indexPath.row;
+        cell.button.section = indexPath.section;
         cell.button.addTarget(self, action:#selector(ListViewController.buttonPressed(button:)), for: .touchUpInside);
         return cell;
     }
@@ -217,6 +197,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return sections[section];
     }
+
     
     private func updateTable(after: () -> Void) {
         tableView.beginUpdates()
@@ -228,11 +209,19 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @objc func buttonPressed(button: ListButton) {
         updateTable(after:) {
             if case .add(let item) = button.type {
-                items.append(item);
+                currentList.append(item);
+                if (!items.contains(item)) {
+                    items.append(item);
+                }
                 searchBar.text = "";
-                //tableView.reloadRows(at: [IndexPath(row: ?, section: ?)]);
+                searchFilter = "";
+                tableView.reloadRows(at: [IndexPath(row: button.row!, section: button.section!)], with: .automatic);
             } else if case .get(let item) = button.type {
-                items = items.filter( { $0 != item } );
+                if currentStore.getLocationOf(item) == nil {
+                    self.performSegue(withIdentifier:"LocateItem", sender:item);
+                    // FIXME: Must ask them which aisle to look in
+                }
+                currentList = currentList.filter( { $0 != item } );
             }
         }
     }
@@ -244,14 +233,23 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
 
-    /*
+    
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        guard let navigationViewController = segue.destination as? UINavigationController else {
+            print("Unexpected segue \(segue.destination)");
+            return;
+        }
+        guard let locationViewController = navigationViewController.topViewController as? LocationViewController else {
+            print("Unexpected segue \(navigationViewController.topViewController)");
+            return;
+        }
+        locationViewController.determineLocationOf(sender!, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(sender)", then: { print("Ok \($0) -> \($1)"); });        
     }
-    */
+    
 
 }
