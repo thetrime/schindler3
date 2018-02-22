@@ -19,12 +19,15 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     //MARK: Properties
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var setLocationButton: UIBarButtonItem!
+    
     private var items = [String]();
     private var currentList = [String]();
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
     private var temporaryItemRow: Int?;
     private var searchFilter: String = "";
+    private var storeNames: [String] = [];
     
     private var currentStore: Store! {
         didSet {
@@ -35,12 +38,11 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     //MARK: Methods
-    private func loadItems() {
-        // FIXME: Implement this properly
-    }
-    
     private func loadStoreList() {
-        // FIXME: Implement this
+        // FIXME: load these from a file
+        createStoreNamed("Home");
+        createStoreNamed("Tesco");
+        createStoreNamed("Morrisons");
     }
 
     
@@ -121,28 +123,30 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //tableView.reloadData();
     }
     
+    private func loadItems() {
+        // FIXME: Load these from a file
+        items.append("cat");
+        items.append("banana");
+        items.append("cabbage");
+        items.append("potato");
+        items.append("leek");
+        items.append("steamed monkfish liver");
+        items.append("expired spicy fish eggs");
+        items.append("Poop");
+    }
+    
+    private func loadList() {
+        // FIXME: Load these from a file
+        currentList.append("cat");
+        currentList.append("potato");
+        currentList.append("banana");
+
+    }
+    
     private func determineStore() {
         // FIXME: Implement this properly
         updateTable(after:) {
-            currentStore = Store(name:"Home");
-            items.append("cat");
-            items.append("banana");
-            items.append("cabbage");
-            items.append("potato");
-            items.append("leek");
-            items.append("steamed monkfish liver");
-            items.append("expired spicy fish eggs");
-            items.append("Poop");
-
-
-            currentList.append("cat");
-            currentList.append("potato");
-            currentList.append("banana");
-
-            currentStore?.setItemLocation("cat", to: "Lounge");
-            currentStore?.setItemLocation("potato", to:"Kitchen");
-            currentStore?.setItemLocation("leek", to: "Lounge");
-            currentStore?.setItemLocation("Poop", to: "Toilet");
+            currentStore = loadStoreNamed("Home");
         }
     }
     
@@ -150,11 +154,14 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         super.viewDidLoad()
        // tableView.tableFooterView = UIView();
         loadItems();
+        loadList();
         loadStoreList();
         determineStore();
         searchBar.delegate = self;
+        setLocationButton.target = self;
+        setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -207,7 +214,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         updateTableView();
     }
     
-    // MARK: Button handler
+    // MARK: Button handlers
     @objc func buttonPressed(button: ListButton) {
         updateTable(after:) {
             if case .add(let item) = button.type {
@@ -230,15 +237,35 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
+    @objc func setLocationButtonPressed(button: UIButton) {
+        self.performSegue(withIdentifier: "DetermineStore", sender: nil);
+    }
+    
     // MARK: UISearchBarDelegate
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         updateTable(after:) {
             searchFilter = searchText;
         }
     }
-
+    
+    func createStoreNamed(_ name: String) {
+        storeNames.append(name);
+    }
+    
+    func loadStoreNamed(_ name: String) -> Store {
+        // FIXME: Load this from a file
+        var s = Store(name:name);
+        if (name == "Home") {
+            s.setItemLocation("cat", to: "Lounge");
+            s.setItemLocation("potato", to:"Kitchen");
+            s.setItemLocation("leek", to: "Lounge");
+            s.setItemLocation("Poop", to: "Toilet");
+        }
+        return s;
+    }
     
     // MARK: - Navigation
+
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -252,14 +279,23 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             print("Unexpected segue \(String(describing: navigationViewController.topViewController))");
             return;
         }
-        guard let item = sender as? String else {
-            print("Unexpected sender")
-            return;
+        if (segue.identifier == "LocateItem") {
+            guard let item = sender as? String else {
+                print("Unexpected sender")
+                return;
+            }
+            locationViewController.determineLocationOf(item, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(item)", then: {
+                let locatedItem = $0;
+                let location = $1;
+                self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
+        } else if (segue.identifier == "DetermineStore") {
+            locationViewController.determineLocationOf("", amongst:storeNames, withTitle: "Where are you?", then: {
+                let location = $1;
+                if self.storeNames.index(of:location) == nil {
+                    self.createStoreNamed(location);
+                }
+                self.updateTable(after:) {self.currentStore = self.loadStoreNamed(location) }
+            });
         }
-        locationViewController.determineLocationOf(item, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(item)", then: {
-            let locatedItem = $0;
-            let location = $1;
-            self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
-        
     }
 }

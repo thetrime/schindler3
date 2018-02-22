@@ -12,9 +12,9 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
 
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
-    
-    var items : [String] = [];
+    var items: [String] = [];
     var filteredItems: [String] = [];
+    var stores: [String] = ["Home"]
     private var filter: String = "";
     private var key: String = "";
     private var callback: ((String, String)->())!;

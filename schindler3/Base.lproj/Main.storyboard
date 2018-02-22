@@ -91,17 +91,20 @@
                     <navigationItem key="navigationItem" id="nx7-5b-HCz">
                         <barButtonItem key="rightBarButtonItem" title="Set" id="2xu-jR-Hps">
                             <connections>
-                                <segue destination="z01-Xe-SXA" kind="presentation" id="ewP-T5-woQ"/>
+                                <action selector="setLocationButton:" destination="R36-26-kGu" id="bxs-S9-GqE"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="searchBar" destination="H5h-d9-045" id="4tg-Qi-7FO"/>
+                        <outlet property="setLocationButton" destination="2xu-jR-Hps" id="Kfw-bb-xtS"/>
                         <outlet property="tableView" destination="SVV-j5-1un" id="j0n-xT-ITD"/>
                         <segue destination="i4U-Ko-XMi" kind="show" identifier="LocateItem" id="gjn-kk-wf5"/>
+                        <segue destination="z01-Xe-SXA" kind="presentation" identifier="DetermineStore" id="bsF-Xm-bO3"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="tDU-eI-lto" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="R36-26-kGu" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
             <point key="canvasLocation" x="-1914" y="116"/>
         </scene>
