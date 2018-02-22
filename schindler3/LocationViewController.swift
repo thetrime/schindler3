@@ -16,8 +16,8 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
     var items : [String] = [];
     var filteredItems: [String] = [];
     private var filter: String = "";
-    private var key: Any = "";
-    private var callback: ((Any, String)->())!;
+    private var key: String = "";
+    private var callback: ((String, String)->())!;
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,7 +31,7 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
         // Dispose of any resources that can be recreated.
     }
     
-    func determineLocationOf(_ item: Any, amongst choices: [String], withTitle title:String, then:@escaping (Any, String)->() ) -> () {
+    func determineLocationOf(_ item: String, amongst choices: [String], withTitle title:String, then:@escaping (String, String)->() ) -> () {
         navigationItem.title = title;
         key = item;
         items = choices;

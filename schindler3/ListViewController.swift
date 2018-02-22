@@ -132,6 +132,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             items.append("leek");
             items.append("steamed monkfish liver");
             items.append("expired spicy fish eggs");
+            items.append("Poop");
 
 
             currentList.append("cat");
@@ -141,6 +142,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             currentStore?.setItemLocation("cat", to: "Lounge");
             currentStore?.setItemLocation("potato", to:"Kitchen");
             currentStore?.setItemLocation("leek", to: "Lounge");
+            currentStore?.setItemLocation("Poop", to: "Toilet");
         }
     }
     
@@ -215,13 +217,15 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 }
                 searchBar.text = "";
                 searchFilter = "";
-                tableView.reloadRows(at: [IndexPath(row: button.row!, section: button.section!)], with: .automatic);
+                tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic);
             } else if case .get(let item) = button.type {
                 if currentStore.getLocationOf(item) == nil {
                     self.performSegue(withIdentifier:"LocateItem", sender:item);
                     // FIXME: Must ask them which aisle to look in
                 }
+                print("currentList was \(currentList)")
                 currentList = currentList.filter( { $0 != item } );
+                print("currentList is now \(currentList)")
             }
         }
     }
@@ -245,11 +249,17 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             return;
         }
         guard let locationViewController = navigationViewController.topViewController as? LocationViewController else {
-            print("Unexpected segue \(navigationViewController.topViewController)");
+            print("Unexpected segue \(String(describing: navigationViewController.topViewController))");
             return;
         }
-        locationViewController.determineLocationOf(sender!, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(sender)", then: { print("Ok \($0) -> \($1)"); });        
+        guard let item = sender as? String else {
+            print("Unexpected sender")
+            return;
+        }
+        locationViewController.determineLocationOf(item, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(item)", then: {
+            let locatedItem = $0;
+            let location = $1;
+            self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
+        
     }
-    
-
 }
