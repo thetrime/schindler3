@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		F40185EE203B1DAF004107FC /* ListButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40185ED203B1DAF004107FC /* ListButton.swift */; };
+		F4B17EF62041AE3100EC27ED /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EF52041AE3100EC27ED /* DataManager.swift */; };
+		F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */; };
+		F4B17EFB2041BE8F00EC27ED /* SQLiteDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */; };
 		F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D665E3203729280017E0CA /* AppDelegate.swift */; };
 		F4D665E9203729280017E0CA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4D665E7203729280017E0CA /* Main.storyboard */; };
 		F4D665EB203729280017E0CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4D665EA203729280017E0CA /* Assets.xcassets */; };
@@ -22,6 +25,9 @@
 
 /* Begin PBXFileReference section */
 		F40185ED203B1DAF004107FC /* ListButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListButton.swift; sourceTree = "<group>"; };
+		F4B17EF52041AE3100EC27ED /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
+		F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDatabase.swift; sourceTree = "<group>"; };
 		F4D665E0203729280017E0CA /* schindler3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = schindler3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4D665E3203729280017E0CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4D665E8203729280017E0CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -41,17 +47,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F4B17EF72041BAF900EC27ED /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F4D665D7203729280017E0CA = {
 			isa = PBXGroup;
 			children = (
 				F4D665E2203729280017E0CA /* schindler3 */,
 				F4D665E1203729280017E0CA /* Products */,
+				F4B17EF72041BAF900EC27ED /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -71,6 +87,8 @@
 				F4D665F520372BE10017E0CA /* ListItemTableViewCell.swift */,
 				F40185ED203B1DAF004107FC /* ListButton.swift */,
 				F4DE162720373704003C6A3B /* ListViewController.swift */,
+				F4B17EF52041AE3100EC27ED /* DataManager.swift */,
+				F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */,
 				F4DE162B20373BDD003C6A3B /* Store.swift */,
 				F4DE16292037378B003C6A3B /* Item.swift */,
 				F4EB81C7203C448C003625D0 /* LocationViewController.swift */,
@@ -158,9 +176,11 @@
 				F4DE162A2037378B003C6A3B /* Item.swift in Sources */,
 				F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */,
 				F40185EE203B1DAF004107FC /* ListButton.swift in Sources */,
+				F4B17EFB2041BE8F00EC27ED /* SQLiteDatabase.swift in Sources */,
 				F4DE162820373704003C6A3B /* ListViewController.swift in Sources */,
 				F4D665F620372BE10017E0CA /* ListItemTableViewCell.swift in Sources */,
 				F4EB81CA203C51DD003625D0 /* Diff.swift in Sources */,
+				F4B17EF62041AE3100EC27ED /* DataManager.swift in Sources */,
 				F4EB81C8203C448C003625D0 /* LocationViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

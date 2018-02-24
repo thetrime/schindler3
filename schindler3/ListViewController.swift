@@ -13,53 +13,45 @@
 //    Send and process messages when network is online
 
 import UIKit
+import CoreLocation;
 
-class ListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class ListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate, CLLocationManagerDelegate {
 
     //MARK: Properties
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var setLocationButton: UIBarButtonItem!
     
-    private var items = [String]();
-    private var currentList = [String]();
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
-    private var temporaryItemRow: Int?;
     private var searchFilter: String = "";
-    private var storeNames: [String] = [];
+    private var locationManager = CLLocationManager();
+    private var currentLocation: (Double, Double) = (0,0);
+    private var dataManager = DataManager();
     
     private var currentStore: Store! {
         didSet {
             print("setting navigation title");
             navigationItem.title = currentStore.name;
-            updateTable(after:) {}
         }
     }
     
     //MARK: Methods
-    private func loadStoreList() {
-        // FIXME: load these from a file
-        createStoreNamed("Home");
-        createStoreNamed("Tesco");
-        createStoreNamed("Morrisons");
-    }
-
+    
     
     private func updateTableView() {
         let temporaryItem = searchFilter;
         let filter = searchFilter.lowercased();
         var newLocations: [String: [String]] = [:];
         // The list has a temporary item if the search bar is not empty and the thing in the search bar doesn't match anything in the list
-        let hasTemporaryItem = filter != "" && !items.contains(where:{$0.caseInsensitiveCompare(filter) == .orderedSame})
-        for item in hasTemporaryItem ? items + [temporaryItem] : items {
+        let hasTemporaryItem = filter != "" && !dataManager.itemExists(filter);
+        for item in hasTemporaryItem ? dataManager.getItems() + [temporaryItem] : dataManager.getItems() {
             if (filter != "" && !item.lowercased().contains(filter)) {
                 // The filter is not empty and this item does not match the filter. Do not include it.
                 continue;
             }
-            if (filter == "" && !currentList.contains(item)) {
+            if (filter == "" && !dataManager.getCurrentList().contains(item)) {
                 // The filter IS empty so we only want to display items actually on the current list
-                print("Breaking here for \(item)")
                 continue;
             }
             if let aisle = currentStore.getLocationOf(item) {
@@ -80,13 +72,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             newLocations[location] = itemList.sorted(by: <);
         }
         let newSections = newLocations.keys.sorted();
-        if (hasTemporaryItem) {
-            // FIXME: Nope. The new item could be in any section!
-            temporaryItemRow = newLocations["Unknown"]?.index(of:temporaryItem);
-        } else {
-            temporaryItemRow = nil;
-        }
-        
+
         // Table update is hard to get your head around. The general idea is:
         // * First all the row deletes are processed
         // * Next, all the section deletes are processed
@@ -112,7 +98,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             print("      * Updated \(modifiedRows) on section \(sectionIndex)");
             tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.automatic);
             tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:newSectionIndex)}), with:.automatic);
-            tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.automatic);
+            tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.none);
         }
         tableView.deleteSections(deletedSections, with:.automatic);
         tableView.insertSections(insertedSections, with:.automatic);
@@ -123,40 +109,30 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //tableView.reloadData();
     }
     
-    private func loadItems() {
-        // FIXME: Load these from a file
-        items.append("cat");
-        items.append("banana");
-        items.append("cabbage");
-        items.append("potato");
-        items.append("leek");
-        items.append("steamed monkfish liver");
-        items.append("expired spicy fish eggs");
-        items.append("Poop");
-    }
-    
-    private func loadList() {
-        // FIXME: Load these from a file
-        currentList.append("cat");
-        currentList.append("potato");
-        currentList.append("banana");
-
-    }
-    
     private func determineStore() {
-        // FIXME: Implement this properly
-        updateTable(after:) {
-            currentStore = loadStoreNamed("Home");
+        let newStore = dataManager.findStoreClosestTo(currentLocation);
+        if (newStore != currentStore.name) {
+            updateTable(after:) {
+                currentStore = dataManager.loadStoreNamed(newStore);
+            }
         }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
        // tableView.tableFooterView = UIView();
-        loadItems();
-        loadList();
-        loadStoreList();
-        determineStore();
+        updateTable(after:) {
+            currentStore = dataManager.loadStoreNamed("Home");
+        }
+        self.locationManager.requestWhenInUseAuthorization();
+        if CLLocationManager.locationServicesEnabled() {
+            print("Tracking location...")
+            locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            locationManager.startUpdatingLocation()
+        } else {
+            print("Location is not allowed");
+        }
         searchBar.delegate = self;
         setLocationButton.target = self;
         setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
@@ -192,7 +168,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         print("Request for item at section \(indexPath.section), row \(indexPath.row). This section contains \(items)");
         cell.label.text = items[indexPath.row];
-        if (currentList.contains(items[indexPath.row])) {
+        if (dataManager.getCurrentList().contains(items[indexPath.row])) {
             cell.button.type = .get(items[indexPath.row]);
         } else {
             cell.button.type = .add(items[indexPath.row]);
@@ -218,21 +194,15 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @objc func buttonPressed(button: ListButton) {
         updateTable(after:) {
             if case .add(let item) = button.type {
-                currentList.append(item);
-                if (!items.contains(item)) {
-                    items.append(item);
-                }
+                dataManager.addItemToList(named: item);                
                 searchBar.text = "";
                 searchFilter = "";
                 tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic);
             } else if case .get(let item) = button.type {
                 if currentStore.getLocationOf(item) == nil {
                     self.performSegue(withIdentifier:"LocateItem", sender:item);
-                    // FIXME: Must ask them which aisle to look in
                 }
-                print("currentList was \(currentList)")
-                currentList = currentList.filter( { $0 != item } );
-                print("currentList is now \(currentList)")
+                dataManager.deleteListItem(named: item);
             }
         }
     }
@@ -248,20 +218,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
-    func createStoreNamed(_ name: String) {
-        storeNames.append(name);
-    }
-    
-    func loadStoreNamed(_ name: String) -> Store {
-        // FIXME: Load this from a file
-        var s = Store(name:name);
-        if (name == "Home") {
-            s.setItemLocation("cat", to: "Lounge");
-            s.setItemLocation("potato", to:"Kitchen");
-            s.setItemLocation("leek", to: "Lounge");
-            s.setItemLocation("Poop", to: "Toilet");
-        }
-        return s;
+    // MARK: CLLocationManagerDelegate
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        print("You have moved")
+        guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
+        currentLocation = (locValue.latitude, locValue.longitude);
+        determineStore();
     }
     
     // MARK: - Navigation
@@ -289,12 +251,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let location = $1;
                 self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
         } else if (segue.identifier == "DetermineStore") {
-            locationViewController.determineLocationOf("", amongst:storeNames, withTitle: "Where are you?", then: {
+            locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().keys.sorted(), withTitle: "Where are you?", then: {
                 let location = $1;
-                if self.storeNames.index(of:location) == nil {
-                    self.createStoreNamed(location);
-                }
-                self.updateTable(after:) {self.currentStore = self.loadStoreNamed(location) }
+                self.dataManager.setLocationOf(store: location, to:self.currentLocation);                
+                self.updateTable(after:) {self.currentStore = self.dataManager.loadStoreNamed(location) }
             });
         }
     }

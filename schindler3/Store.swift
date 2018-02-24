@@ -10,12 +10,14 @@ import Foundation
 
 class Store {
     var name: String;
-    var aisles: [String: [String]];
+    private var aisles: [String: [String]];
     private var locations: [String:String];
-    init(name: String) {
+    private weak var dataManager: DataManager!;
+    init(name: String, dataSource: DataManager) {
         self.name = name;
         aisles = [:];
         locations = [:];
+        dataManager = dataSource;
     }
     
     //MARK: Methods
@@ -26,6 +28,7 @@ class Store {
             aisles[aisle] = [item];
         }
         locations[item] = aisle;
+        dataManager.setLocationOf(item: item, atStore: name, toLocation:aisle);
     }
     
     func getLocationOf(_ item: String) -> String? {

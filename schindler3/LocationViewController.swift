@@ -59,7 +59,7 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
         let onlyInsertedRows = Set(insertedRows).subtracting(modifiedRows);
         tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:0)}), with:.automatic);
         tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:0)}), with:.automatic);
-        tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:0)}), with:.automatic);
+        tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:0)}), with:.none);
         filteredItems = newFilteredItems;
         tableView.endUpdates();
     }
