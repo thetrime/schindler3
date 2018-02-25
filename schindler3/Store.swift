@@ -34,4 +34,12 @@ class Store {
     func getLocationOf(_ item: String) -> String? {
         return locations[item];
     }
+    
+    func moveToUnknownLocation(item: String) {
+        if let oldLocation = locations[item] {
+            aisles[oldLocation] = aisles[oldLocation]!.filter({ $0 != item });
+        }
+        locations[item] = nil;
+        dataManager.move(item: item, toUnknownLocationAtStore: name);
+    }
 }

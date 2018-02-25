@@ -135,8 +135,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         searchBar.delegate = self;
         setLocationButton.target = self;
-        setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
     }
+   
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -182,7 +182,41 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return sections[section];
     }
-
+    
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let section = sections[indexPath.section];
+        guard let items = locations[section] else {
+            fatalError("Request for non-existent section \(section)?");
+        }
+        let item = items[indexPath.row];
+        let removeAction = UIContextualAction(style: .normal, title: "Remove") { (action, view, handler) in
+            print("Remove Action Tapped");
+            self.updateTable {
+                self.currentStore.moveToUnknownLocation(item:item);
+            }
+            handler(true);
+        }
+        let deferAction = UIContextualAction(style: .normal, title: "Defer") { (action, view, handler) in
+            print("Defer Action Tapped");
+            handler(true);
+        }
+        removeAction.backgroundColor = .red;
+        deferAction.backgroundColor = .green;
+        let configuration: UISwipeActionsConfiguration;
+        if section == "Unknown" {
+            configuration = UISwipeActionsConfiguration(actions: [deferAction])
+        } else {
+            configuration = UISwipeActionsConfiguration(actions: [removeAction, deferAction]);
+        }
+        configuration.performsFirstActionWithFullSwipe = false;
+        return configuration
+  //      return [removeAction, deferAction]
+    }
     
     private func updateTable(after: () -> Void) {
         tableView.beginUpdates()
@@ -251,7 +285,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let location = $1;
                 self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
         } else if (segue.identifier == "DetermineStore") {
-            locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().keys.sorted(), withTitle: "Where are you?", then: {
+            locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().sorted(), withTitle: "Where are you?", then: {
                 let location = $1;
                 self.dataManager.setLocationOf(store: location, to:self.currentLocation);                
                 self.updateTable(after:) {self.currentStore = self.dataManager.loadStoreNamed(location) }

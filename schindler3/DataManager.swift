@@ -52,7 +52,7 @@ class DataManager {
         setLocationOf(item: "Potato", atStore: "Home", toLocation: "Kitchen")
         setLocationOf(item: "Leek", atStore: "Home", toLocation: "Lounge")
         setLocationOf(item: "Poop", atStore: "Home", toLocation: "Toilet")
- */
+    */
     }
     
     private func loadItems() {
@@ -62,17 +62,6 @@ class DataManager {
                 items.append(i);
             }
         }
-        
-        /*
-        items.append("cat");
-        items.append("banana");
-        items.append("cabbage");
-        items.append("potato");
-        items.append("leek");
-        items.append("steamed monkfish liver");
-        items.append("expired spicy fish eggs");
-        items.append("Poop");
-         */
     }
     
     private func loadCurrentList() {
@@ -84,34 +73,28 @@ class DataManager {
             }
         }
         print("Current list is now \(currentList)")
-        /*
-        currentList.append("cat");
-        currentList.append("potato");
-        currentList.append("banana");
-         */
     }
     
     private func loadStoreLocations () {
         stores = [:];
-        for row in db.select(from: "store", values:["store_name, latitude, longitude"]) {
+        for row in db.select(from: "store", values:["store_name", "latitude", "longitude"]) {
             if let name = row["store_name"] as? String,
                 let latitude = row["latitude"] as? Double,
                 let longitude = row["longitude"] as? Double {
-                createStoreNamed(name, atLocation:(latitude, longitude));
+                stores[name] = (latitude, longitude);
             }
         }
-        /*
-        createStoreNamed("Home", atLocation:(0,10));
-        createStoreNamed("Tesco", atLocation:(10,0));
-        createStoreNamed("Morrisons", atLocation:(20,0));
-         */
     }
     
     func createStoreNamed(_ name: String, atLocation location:(Double, Double)) {
-        // FIXME: Save
-        db.insert(to: "store", values:["store_name": name,
-                                        "latitude": location.0,
-                                        "longitude": location.1]);
+        if (stores[name] != nil) {
+            // The store already exists. Move it instead (if needed)
+            setLocationOf(store: name, to: location);
+        } else {
+            db.insert(to: "store", values:["store_name": name,
+                                           "latitude": location.0,
+                                           "longitude": location.1]);
+        }
         stores[name] = location;
     }
     
@@ -123,7 +106,15 @@ class DataManager {
         }
     }
     
+    func move(item: String, toUnknownLocationAtStore store: String) {
+        db.delete(from:"store_contents", where:["store_name":store,
+                                                "item":item]);
+    }
+    
     func setLocationOf(item: String, atStore store: String, toLocation location: String) {
+        // TBD: Do this in a single transaction. It isnt super-important, though, so long as we only send the one message to the backend
+        db.delete(from:"store_contents", where:["store_name":store,
+                                                "item":item]);
         db.insert(to:"store_contents", values:["store_name":store,
                                                "item": item,
                                                "location": location]);
@@ -138,10 +129,11 @@ class DataManager {
         if stores[name] == nil {
             createStoreNamed(name, atLocation:location);
         } else {
+            print("Moving \(name) to \(location)")
             db.update("store",
                       set:["latitude":location.0,
                            "longitude":location.1],
-                      where:["name":name]);
+                      where:["store_name":name]);
             stores[name] = location;
         }
     }
@@ -155,8 +147,9 @@ class DataManager {
         return items.contains(where:{$0.caseInsensitiveCompare(item) == .orderedSame});
     }
     
-    func getStoreList() -> [String:(Double, Double)] {
-        return stores;
+    func getStoreList() -> [String] {
+        print("Foo \(stores)")
+        return Array(stores.keys);
     }
 
     func getItems() -> [String] {
@@ -192,14 +185,6 @@ class DataManager {
             }
         }
         print("Loaded store \(name) from disk");
-        /*
-        if (name == "Home") {
-            s.setItemLocation("cat", to: "Lounge");
-            s.setItemLocation("potato", to:"Kitchen");
-            s.setItemLocation("leek", to: "Lounge");
-            s.setItemLocation("Poop", to: "Toilet");
-        }
-        */
         return s;
     }
 }

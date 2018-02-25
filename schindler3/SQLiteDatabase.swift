@@ -23,7 +23,7 @@ class SQLiteDatabase {
         } catch let error as NSError {
             print("Ooops! Something went wrong: \(error)")
         }
-         */
+        */
         /* End clump */
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("error opening database");
