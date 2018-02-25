@@ -15,8 +15,30 @@ class ListButton: UIButton {
         case get(String);
         case set(String);
     }
-    var row: Int?;
-    var section: Int?;
+    var row: Int {
+        get {
+            var v: UIView! = self;
+            repeat {
+                v = v.superview!
+            } while !(v is UITableViewCell)
+            let cell = v as! UITableViewCell
+            let table: UITableView = cell.superview as! UITableView;
+            let path = table.indexPath(for: cell)!;
+            return path.row;
+        }
+    }
+    var section: Int {
+        get {
+            var v: UIView! = self;
+            repeat {
+                v = v.superview!
+            } while !(v is UITableViewCell)
+            let cell = v as! UITableViewCell
+            let table: UITableView = cell.superview as! UITableView;
+            let path = table.indexPath(for: cell)!;
+            return path.section;
+        }
+    }
     
     var type: ButtonType = .add("Unknown") {
         didSet {

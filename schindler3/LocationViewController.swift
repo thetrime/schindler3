@@ -88,8 +88,6 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
         } else {
             cell.button.type = .set(filteredItems[indexPath.row]);
         }
-        cell.button.row = indexPath.row;
-        cell.button.section = 0;
         cell.button.addTarget(self, action:#selector(LocationViewController.buttonPressed(button:)), for: .touchUpInside);
         return cell;
     }

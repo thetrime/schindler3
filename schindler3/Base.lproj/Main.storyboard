@@ -99,6 +99,7 @@
                     <connections>
                         <outlet property="searchBar" destination="H5h-d9-045" id="4tg-Qi-7FO"/>
                         <outlet property="setLocationButton" destination="2xu-jR-Hps" id="Kfw-bb-xtS"/>
+                        <outlet property="syncButton" destination="ui9-9E-LO2" id="D2o-cK-K21"/>
                         <outlet property="tableView" destination="SVV-j5-1un" id="j0n-xT-ITD"/>
                         <segue destination="i4U-Ko-XMi" kind="show" identifier="LocateItem" id="gjn-kk-wf5"/>
                         <segue destination="z01-Xe-SXA" kind="presentation" identifier="DetermineStore" id="bsF-Xm-bO3"/>

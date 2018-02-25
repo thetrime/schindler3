@@ -9,8 +9,6 @@
 //    Expose the database for copying on/off device
 //    Queue the messages to be sent
 //    Send and process messages when network is online
-// BUGS:
-//    If you start typing and restrict the list to existing items, then *Add* one of those, you get an exception due to table mutation problems
 
 import UIKit
 import CoreLocation;
@@ -21,6 +19,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var setLocationButton: UIBarButtonItem!
+    @IBOutlet weak var syncButton: UIBarButtonItem!
     
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
@@ -86,6 +85,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         print("   * Inserted sections: \(insertedSections)");
         
         for sectionTitle in Set(sections).intersection(Set(newSections)) {
+            print("Section \(sectionTitle) is changing from \(locations[sectionTitle]!) to \(newLocations[sectionTitle]!)")
             let (deletedRows, insertedRows) = changesBetween(locations[sectionTitle]!, and:newLocations[sectionTitle]!);
             let sectionIndex = sections.index(of: sectionTitle)!;
             let newSectionIndex = newSections.index(of: sectionTitle)!
@@ -136,7 +136,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         searchBar.delegate = self;
         setLocationButton.target = self;
         setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
+        syncButton.target = self;
+        syncButton.action = #selector(ListViewController.syncButtonPressed(button:));
     }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -165,15 +168,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         guard let items = locations[section] else {
             fatalError("Request for non-existent section \(section)?");
         }
-        print("Request for item at section \(indexPath.section), row \(indexPath.row). This section contains \(items)");
+        print("Request for item at section \(indexPath.section), row \(indexPath.row): item \(items[indexPath.row]) This section contains \(items)");
         cell.label.text = items[indexPath.row];
         if (dataManager.getCurrentList().contains(items[indexPath.row])) {
             cell.button.type = .get(items[indexPath.row]);
         } else {
             cell.button.type = .add(items[indexPath.row]);
         }
-        cell.button.row = indexPath.row;
-        cell.button.section = indexPath.section;
         cell.button.addTarget(self, action:#selector(ListViewController.buttonPressed(button:)), for: .touchUpInside);
         return cell;
     }
@@ -214,7 +215,6 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         configuration.performsFirstActionWithFullSwipe = false;
         return configuration
-  //      return [removeAction, deferAction]
     }
     
     private func updateTable(after: () -> Void) {
@@ -230,7 +230,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 dataManager.addItemToList(named: item);                
                 searchBar.text = "";
                 searchFilter = "";
-                tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .automatic);
+                print("Reloading row \(button.row) in section \(button.section)")
+                tableView.reloadRows(at: [IndexPath(row: button.row, section: button.section)], with: .automatic);
             } else if case .get(let item) = button.type {
                 if currentStore.getLocationOf(item) == nil {
                     self.performSegue(withIdentifier:"LocateItem", sender:item);
@@ -243,6 +244,11 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @objc func setLocationButtonPressed(button: UIButton) {
         self.performSegue(withIdentifier: "DetermineStore", sender: nil);
     }
+
+    @objc func syncButtonPressed(button: UIButton) {
+        // FIXME: Implement manual sync
+    }
+
     
     // MARK: UISearchBarDelegate
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
