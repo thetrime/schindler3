@@ -6,11 +6,11 @@
 //  Copyright © 2018 Matt Lilley. All rights reserved.
 //
 // TODO List:
-//    Implement the store/aisle configurations
-//    Add GPS info
-//    Save the state to disk after modifications
+//    Expose the database for copying on/off device
 //    Queue the messages to be sent
 //    Send and process messages when network is online
+// BUGS:
+//    If you start typing and restrict the list to existing items, then *Add* one of those, you get an exception due to table mutation problems
 
 import UIKit
 import CoreLocation;
@@ -135,9 +135,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         searchBar.delegate = self;
         setLocationButton.target = self;
+        setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
     }
-   
-    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -254,10 +253,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     // MARK: CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print("You have moved")
-        guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
-        currentLocation = (locValue.latitude, locValue.longitude);
-        determineStore();
+        guard let newLocation: CLLocation = manager.location else { return }
+        if newLocation.distance(from:CLLocation(latitude: currentLocation.0, longitude: currentLocation.1)) > 10 {
+            print("You have moved")
+            currentLocation = (newLocation.coordinate.latitude, newLocation.coordinate.longitude);
+            determineStore();
+        }
     }
     
     // MARK: - Navigation
