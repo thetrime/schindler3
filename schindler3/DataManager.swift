@@ -16,11 +16,15 @@ class DataManager {
     private var items: [String] = [];
     private var currentList: [String] = [];
     private var db = SQLiteDatabase(file:"schindler3.db");
+    private var net: NetworkManager!;
+    var delegate: ListViewController?;
+    
     init() {
         prepareSchema();
         loadStoreLocations();
         loadItems();
         loadCurrentList();
+        net = NetworkManager(withDataManager: self);
     }
     
     private func prepareSchema() {
@@ -32,27 +36,11 @@ class DataManager {
         db.createTable(named: "store_contents", withColumns: ["store_name": "TEXT",
                                                               "item": "TEXT",
                                                               "location": "TEXT"]);
-        /* Test data */
-        /*
-        createItem(named: "Cat");
-        createItem(named: "Banana");
-        createItem(named: "Cabbage");
-        createItem(named: "Potato");
-        createItem(named: "Leek");
-        createItem(named: "Steamed monkfish liver");
-        createItem(named: "Expired spicy fish eggs");
-        createItem(named: "Poop");
-        addItemToList(named: "Cat");
-        addItemToList(named: "Potato");
-        addItemToList(named: "Banana");
-        createStoreNamed("Tesco", atLocation: (10,0));
-        createStoreNamed("Home", atLocation: (0,10));
-        createStoreNamed("Morrisons", atLocation: (20,0));
-        setLocationOf(item: "Cat", atStore: "Home", toLocation: "Lounge")
-        setLocationOf(item: "Potato", atStore: "Home", toLocation: "Kitchen")
-        setLocationOf(item: "Leek", atStore: "Home", toLocation: "Lounge")
-        setLocationOf(item: "Poop", atStore: "Home", toLocation: "Toilet")
-    */
+        db.createTable(named: "outgoing_messages", withColumns: ["local_id": "INTEGER PRIMARY KEY",
+                                                                 "message": "TEXT"]);
+        db.createTable(named: "global_state", withColumns: ["global_id": "INTEGER"]);
+
+
     }
     
     private func loadItems() {
@@ -148,7 +136,6 @@ class DataManager {
     }
     
     func getStoreList() -> [String] {
-        print("Foo \(stores)")
         return Array(stores.keys);
     }
 
@@ -174,6 +161,23 @@ class DataManager {
         return bestMatch.0;
     }
     
+    func updateGlobalState(to value: Int) {
+        if (getGlobalState() == 0) {
+            db.insert(to:"global_state", values:["global_id": value])
+        } else {
+            db.update("global_state", set:["global_id": value]);
+        }
+    }
+    
+    func getGlobalState() -> Int {
+        for row in db.select(from:"global_state", values:["global_id"]) {
+            if let global_id = row["global_id"] as? Int {
+                return global_id;
+            }
+        }
+        return 0;
+    }
+    
     func loadStoreNamed(_ name: String) -> Store {
         let s = Store(name:name, dataSource:self);
         for row in db.select(from: "store_contents", values:["location", "item"], where:["store_name":name]) {
@@ -186,5 +190,9 @@ class DataManager {
         }
         print("Loaded store \(name) from disk");
         return s;
+    }
+    
+    func storeMessage(_ message: String) -> Int64 {
+        return db.insert(to: "messages", values:["message": message]);
     }
 }

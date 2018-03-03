@@ -120,6 +120,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
        // tableView.tableFooterView = UIView();
         updateTable(after:) {
             currentStore = dataManager.loadStoreNamed("Home");

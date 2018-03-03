@@ -164,7 +164,7 @@ class SQLiteDatabase {
         return rows;
     }
     
-    func insert(to table: String, values v:[String: Any]) {
+    @discardableResult func insert(to table: String, values v:[String: Any]) -> Int64 {
         var stmt: OpaquePointer?;
         var names: [String] = [];
         var values: [Any] = [];
@@ -177,13 +177,14 @@ class SQLiteDatabase {
         print("INSERT INTO \(table)(\(columnNames)) VALUES(\(questionMarks)) -> \(values)")
         if sqlite3_prepare(db, "INSERT INTO \(table)(\(columnNames)) VALUES(\(questionMarks))", -1, &stmt, nil) != SQLITE_OK {
             printLastError("insert");
-            return;
+            return -1;
         }
         bindValues(stmt, 0, values);
         if sqlite3_step(stmt) != SQLITE_DONE {
             printLastError("insert");
-            return;
+            return -1;
         }
         print("Insert into \(table)")
+        return sqlite3_last_insert_rowid(db);
     }
 }
