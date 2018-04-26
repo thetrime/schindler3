@@ -6,6 +6,9 @@
 //  Copyright © 2018 Matt Lilley. All rights reserved.
 //
 
+// Ideally this should have a handle to the various view controllers so that when we update something they might care about
+// we can trigger an update in their table(s).
+
 import Foundation
 import CoreLocation;
 import SQLite3;
