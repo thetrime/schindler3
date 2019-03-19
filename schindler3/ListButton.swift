@@ -10,7 +10,7 @@ import UIKit
 
 class ListButton: UIButton {
     var item: String?;
-    enum ButtonType {
+    enum XButtonType {
         case add(String);
         case get(String);
         case set(String);
@@ -40,7 +40,7 @@ class ListButton: UIButton {
         }
     }
     
-    var type: ButtonType = .add("Unknown") {
+    var type: XButtonType = .add("Unknown") {
         didSet {
             switch (type) {
             case .add(_):
