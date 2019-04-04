@@ -41,9 +41,27 @@ class DataManager {
                                                               "location": "TEXT"]);
         db.createTable(named: "outgoing_messages", withColumns: ["local_id": "INTEGER PRIMARY KEY",
                                                                  "message": "TEXT"]);
-        db.createTable(named: "global_state", withColumns: ["global_id": "INTEGER"]);
-
-
+        db.createTable(named: "sync_state", withColumns: ["timestamp": "BIGINTEGER"]);
+        db.createTable(named: "messages", withColumns: ["message_id": "INTEGER PRIMARY KEY",
+                                                        "message": "TEXT"]);
+        syncPoint()
+}
+    
+    func syncPoint() -> Int64 {
+        for row in db.select(from:"sync_state", values:["timestamp"]) {
+            if let i = row["timestamp"] as? Int64 {
+                return i;
+            }
+        }
+        print("WARNING: No sync state!")
+        db.insert(to:"sync_state", values:["timestamp": 0])
+        return 0;
+    }
+    
+    func setSync(to timestamp:Int64) {
+        db.update("sync_state",
+                  set:["timestamp": timestamp]);
+        print("Sync point is now \(timestamp)")
     }
     
     private func loadItems() {
@@ -95,6 +113,11 @@ class DataManager {
         if (!items.contains(item)) {
             createItem(named:item);
         }
+        net.queueMessage(["opcode":"item_added_to_list", "item_id":item, "timestamp":getCurrentMillis()])
+    }
+    
+    private func getCurrentMillis()->Int64 {
+        return Int64(Date().timeIntervalSince1970 * 1000)
     }
     
     func move(item: String, toUnknownLocationAtStore store: String) {
@@ -132,6 +155,7 @@ class DataManager {
     func createItem(named item: String) {
         db.insert(to:"item", values:["item":item]);
         items.append(item);
+        net.queueMessage(["opcode":"item_exists", "item_id":item, "timestamp":getCurrentMillis()])
     }
     
     func itemExists(_ item: String) -> Bool {
@@ -197,5 +221,13 @@ class DataManager {
     
     func storeMessage(_ message: String) -> Int64 {
         return db.insert(to: "messages", values:["message": message]);
+    }
+    
+    func deleteMessage(_ id: Int64) {
+        db.delete(from: "messages", where: ["message_id":id])
+    }
+    
+    func missedMessages() -> [[String:Any]] {
+        return db.select(from: "messages", values:["message", "message_id"], orderBy:["message_id":"asc"])
     }
 }

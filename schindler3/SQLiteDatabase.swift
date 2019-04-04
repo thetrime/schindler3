@@ -16,14 +16,16 @@ class SQLiteDatabase {
         let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent(file)
         /* This next clump deletes the entire DB */
         print("Filename: \(fileURL.path)");
-        /*
-        do {
-            let path = fileURL.path;
-            try FileManager.default.removeItem(atPath:path);
-        } catch let error as NSError {
-            print("Ooops! Something went wrong: \(error)")
+        let freshDB = false
+        if (freshDB) {
+            do {
+                let path = fileURL.path;
+                try FileManager.default.removeItem(atPath:path);
+            } catch let error as NSError {
+                print("Ooops! Something went wrong: \(error)")
+            }
         }
-        */
+        
         /* End clump */
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("error opening database");
@@ -47,6 +49,16 @@ class SQLiteDatabase {
         }
         return ("", []);
     }
+    private func makeOrderClause(_ o: [String:String]) -> String {
+        if (o.count > 0) {
+            var clauses: [String] = [];
+            for (name, direction) in o {
+                clauses.append("\(name) \(direction)");
+            }
+            return "ORDER BY \(clauses.joined(separator: ", "))"
+        }
+        return "";
+    }
     
     private func bindValues(_ stmt:OpaquePointer?, _ from: Int32, _ values: [Any]) {
         var i : Int32 = from;
@@ -57,8 +69,18 @@ class SQLiteDatabase {
                     printLastError("bindValues");
                     return;
                 }
+            } else if let v = value as? Int {
+                if sqlite3_bind_int(stmt, i+1, Int32(v)) != SQLITE_OK {
+                    printLastError("bindValues");
+                    return;
+                }
             } else if let v = value as? Int32 {
                 if sqlite3_bind_int(stmt, i+1, v) != SQLITE_OK {
+                    printLastError("bindValues");
+                    return;
+                }
+            } else if let v = value as? Int64 {
+                if sqlite3_bind_int64(stmt, i+1, v) != SQLITE_OK {
                     printLastError("bindValues");
                     return;
                 }
@@ -68,7 +90,7 @@ class SQLiteDatabase {
                     return;
                 }
             } else {
-                print("Unknown type for \(value)");
+                print("Unknown type for \(value) with type \(type(of: value))");
             }
             i += 1;
         }
@@ -129,11 +151,12 @@ class SQLiteDatabase {
     
     
     
-    func select(from table: String, values:[String], where w:[String:Any] = [:]) -> [[String:Any]] {
+    func select(from table: String, values:[String], where w:[String:Any] = [:], orderBy o:[String:String] = [:]) -> [[String:Any]] {
         var stmt:OpaquePointer?;
         let (whereClause, whereParameters) = makeWhereClause(w);
-        print("SELECT \(values.joined(separator: ",")) FROM \(table) \(whereClause)    -> \(w)")
-        if sqlite3_prepare(db, "SELECT \(values.joined(separator: ",")) FROM \(table) \(whereClause)", -1, &stmt, nil) != SQLITE_OK {
+        let orderClause = makeOrderClause(o);
+        print("SELECT \(values.joined(separator: ",")) FROM \(table) \(whereClause) \(orderClause)")
+        if sqlite3_prepare(db, "SELECT \(values.joined(separator: ",")) FROM \(table) \(whereClause) \(orderClause)", -1, &stmt, nil) != SQLITE_OK {
             printLastError("select")
             return [[:]];
         }
@@ -145,7 +168,7 @@ class SQLiteDatabase {
             for item in values {
                 switch(sqlite3_column_type(stmt, i)) {
                 case SQLITE_INTEGER:
-                    row[item] = sqlite3_column_int(stmt, i);
+                    row[item] = (sqlite3_column_int64(stmt, i) as NSNumber).int64Value;
                 case SQLITE_FLOAT:
                     row[item] = sqlite3_column_double(stmt, i);
                 case SQLITE_TEXT:
