@@ -14,14 +14,23 @@
 :-dynamic(listener/2).
 
 ws(Websocket):-
+        format(user_error, 'New connection received~n', []),
         set_stream(Websocket, encoding(utf8)),
-        thread_create(dispatch(Websocket), ClientId, [detached(true)]),
-        UserId = {null},
-        assert(listener(UserId, ClientId)),
-        client(ClientId, Websocket, UserId).
+        ws_receive(Websocket, Message, [format(json), value_string_as(atom)]),
+        Message.opcode == text,
+        UserId = Message.data.user_id,
+        Password = Message.data.password,
+        format(user_error, 'Login request for user ~w~n', [UserId]),
+        login(UserId, Password),
+        format(user_error, 'Login successful for user ~w~n', [UserId]),
+        setup_call_cleanup((thread_create(dispatch(Websocket), ClientId, [detached(true)]),
+                            assert(listener(UserId, ClientId))
+                           ),
+                           client(ClientId, Websocket, UserId),
+                           thread_send_message(ClientId, close)).
 
 client(ClientId, WebSocket, UserId) :-
-        format(user_error, 'Waiting for message...~n', []),
+        format(user_error, 'Waiting for message from user ~w (client ~w)~n', [UserId, ClientId]),
         ws_receive(WebSocket, Message, [format(json), value_string_as(atom)]),
         format(user_error, 'User ~w: Message: ~q~n', [UserId, Message]),
         ( Message.opcode == close ->
@@ -29,16 +38,18 @@ client(ClientId, WebSocket, UserId) :-
         ; Message.opcode == text ->
             Data = Message.data,
             Opcode = Data.opcode,
-            handle_message(Opcode, UserId, Data)
+            handle_message(Opcode, ClientId, UserId, Data),
+            % If handled, send the message to all clients logged in as UserId who are not the current client
+            with_output_to(atom(Atom),
+                           json_write(current_output, Message.data, [null({null}), width(0)])),
+            forall(listener(UserId, SomeClientId),
+                   ( SomeClientId \== ClientId ->
+                       thread_send_message(ClientId, thread_send_message(ClientId, send(Atom)))
+                   ; otherwise->
+                       true
+                   ))
         ),
         client(ClientId, WebSocket, UserId).
-
-
-ws_send_message(UserId, Message):-
-        with_output_to(atom(Atom),
-                       json_write(current_output, Message, [null({null}), width(0)])),
-        forall(listener(UserId, ClientId),
-               thread_send_message(ClientId, send(Atom))).
 
 
 dispatch(WebSocket):-
@@ -67,8 +78,6 @@ run:-
 wait:-
         thread_get_message(_).
 
-
-:-dynamic(message/2).
 
 
 % The idea:
@@ -114,35 +123,39 @@ wait:-
 % list_entry(item_id varchar, deleted boolean, last_updated timestamp)
 % aisle_item(store_id varchar, aisle_id varchar, item_id varchar, deleted boolean, last_updated timestamp)
 
-% TBD: We need a mechanism for sending these messages to any other people listening after we update the database
+% TBD: We need a mechanism for sending these messages to any other people listening after we update the database without echoing them back to the originator
 
 
-
-handle_message(sync, UserId, Data):-
+handle_message(sync, ClientId, UserId, Data):-
         !,
-        SyncValue = Data.token,
-        aggregate_all(r(bag(Message),
-                        max(Token)),
-                      ( message(Message, Token),
-                        Token >= SyncValue
-                      ),
-                      r(Messages, NewToken)),
-        ws_send_message(UserId, _{opcode:sync_response, data:Messages, sync_token:NewToken}).
+        Timestamp = Data.timestamp,
 
-handle_message(item_exists, UserId, Data):-
+        ( aggregate_all(r(bag(Message),
+                          max(MessageTimestamp)),
+                        sync_message(UserId, Timestamp, Message, MessageTimestamp),
+                        r(Messages, MaxTimestamp))->
+            with_output_to(atom(Atom),
+                           json_write(current_output, _{opcode:sync_response, messages:Messages, timestamp:MaxTimestamp}, [null({null}), width(0)])),
+            thread_send_message(ClientId, send(Atom))
+        ; otherwise->
+            % Nothing to do
+            format(user_error, 'Nothing to sync for user ~w as client ~w', [UserId, ClientId])
+        ).
+
+handle_message(item_exists, _ClientId, UserId, Data):-
         !,
         ItemId = Data.item_id,
         Timestamp = Data.timestamp,
         item_exists(UserId, ItemId, Timestamp, _DidUpdate).
 
 
-handle_message(store_exists, UserId, Data):-
+handle_message(store_exists, _ClientId, UserId, Data):-
         !,
         StoreId = Data.store_id,
         Timestamp = Data.timestamp,
         store_exists(UserId, StoreId, Timestamp, _DidUpdate).
 
-handle_message(store_located_at, UserId, Data):-
+handle_message(store_located_at, _ClientId,UserId, Data):-
         !,
         StoreId = Data.store_id,
         Latitude = Data.latitude,
@@ -150,26 +163,26 @@ handle_message(store_located_at, UserId, Data):-
         Timestamp = Data.timestamp,
         store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, _DidUpdate).
 
-handle_message(aisle_exists_in_store, UserId, Data):-
+handle_message(aisle_exists_in_store, _ClientId, UserId, Data):-
         !,
         StoreId = Data.store_id,
         AisleId = Data.aisle_id,
         Timestamp = Data.timestamp,
         aisle_exists_in_store(UserId, StoreId, AisleId, Timestamp, _DidUpdate).
 
-handle_message(item_added_to_list, UserId, Data):-
+handle_message(item_added_to_list, _ClientId, UserId, Data):-
         !,
         ItemId = Data.item_id,
         Timestamp = Data.timestamp,
         item_added_to_list(UserId, ItemId, Timestamp, _DidUpdate).
 
-handle_message(item_deleted_from_list, UserId, Data):-
+handle_message(item_deleted_from_list, _ClientId, UserId, Data):-
         !,
         ItemId = Data.item_id,
         Timestamp = Data.timestamp,
         item_deleted_from_list(UserId, ItemId, Timestamp, _DidUpdate).
 
-handle_message(item_located_in_aisle, UserId, Data):-
+handle_message(item_located_in_aisle, _ClientId, UserId, Data):-
         !,
         ItemId = Data.item_id,
         StoreId = Data.store_id,
@@ -177,7 +190,7 @@ handle_message(item_located_in_aisle, UserId, Data):-
         Timestamp = Data.timestamp,
         item_located_in_aisle(UserId, ItemId, StoreId, AisleId, Timestamp, _DidUpdate).
 
-handle_message(item_removed_from_aisle, UserId, Data):-
+handle_message(item_removed_from_aisle, _ClientId, UserId, Data):-
         ItemId = Data.item_id,
         StoreId = Data.store_id,
         Timestamp = Data.timestamp,
