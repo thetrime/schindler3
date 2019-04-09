@@ -120,7 +120,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        dataManager.setDelegate(self)
        // tableView.tableFooterView = UIView();
         updateTable(after:) {
             currentStore = dataManager.loadStoreNamed("Home");
@@ -218,7 +218,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         return configuration
     }
     
-    private func updateTable(after: () -> Void) {
+    func updateTable(after: () -> Void) {
         tableView.beginUpdates()
         after();
         updateTableView();

@@ -16,7 +16,7 @@ class SQLiteDatabase {
         let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent(file)
         /* This next clump deletes the entire DB */
         print("Filename: \(fileURL.path)");
-        let freshDB = false
+        let freshDB = true
         if (freshDB) {
             do {
                 let path = fileURL.path;

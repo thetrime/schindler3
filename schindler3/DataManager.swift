@@ -30,6 +30,10 @@ class DataManager {
         net = NetworkManager(withDataManager: self);
     }
     
+    func setDelegate(_ d: ListViewController) {
+        delegate = d;
+    }
+    
     private func prepareSchema() {
         db.createTable(named: "item", withColumns: ["item": "text"]);
         db.createTable(named: "current_list", withColumns: ["item": "TEXT"]);
@@ -38,14 +42,14 @@ class DataManager {
                                                       "longitude": "FLOAT"]);
         db.createTable(named: "store_contents", withColumns: ["store_name": "TEXT",
                                                               "item": "TEXT",
-                                                              "location": "TEXT"]);
+                                                              "location": "TEXT"]);        
         db.createTable(named: "outgoing_messages", withColumns: ["local_id": "INTEGER PRIMARY KEY",
                                                                  "message": "TEXT"]);
         db.createTable(named: "sync_state", withColumns: ["timestamp": "BIGINTEGER"]);
         db.createTable(named: "messages", withColumns: ["message_id": "INTEGER PRIMARY KEY",
                                                         "message": "TEXT"]);
         syncPoint()
-}
+    }
     
     func syncPoint() -> Int64 {
         for row in db.select(from:"sync_state", values:["timestamp"]) {
@@ -95,7 +99,7 @@ class DataManager {
         }
     }
     
-    func createStoreNamed(_ name: String, atLocation location:(Double, Double)) {
+    func createStoreNamed(_ name: String, atLocation location:(Double, Double), _ unsolicited: Bool = false) {
         if (stores[name] != nil) {
             // The store already exists. Move it instead (if needed)
             setLocationOf(store: name, to: location);
@@ -105,41 +109,64 @@ class DataManager {
                                            "longitude": location.1]);
         }
         stores[name] = location;
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": location.0, "longitude": location.1, "timestamp":getCurrentMillis()])
+        }
     }
     
-    func addItemToList(named item:String) {
+    func addItemToList(named item:String, _ unsolicited: Bool = false) {
         db.insert(to:"current_list", values:["item": item]);
         currentList.append(item);
         if (!items.contains(item)) {
-            createItem(named:item);
+            createItem(named:item, unsolicited);
         }
-        net.queueMessage(["opcode":"item_added_to_list", "item_id":item, "timestamp":getCurrentMillis()])
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"item_added_to_list", "item_id":item, "timestamp":getCurrentMillis()])
+        }
+    }
+
+    func createItem(named item: String, _ unsolicited: Bool = true) {
+        db.insert(to:"item", values:["item":item]);
+        items.append(item);
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"item_exists", "item_id":item, "timestamp":getCurrentMillis()])
+        }
     }
     
     private func getCurrentMillis()->Int64 {
         return Int64(Date().timeIntervalSince1970 * 1000)
     }
     
-    func move(item: String, toUnknownLocationAtStore store: String) {
+    func move(item: String, toUnknownLocationAtStore store: String, _ unsolicited: Bool = false) {
         db.delete(from:"store_contents", where:["store_name":store,
                                                 "item":item]);
+        if (!unsolicited) {
+            net.queueMessage(["opcode": "item_removed_from_aisle", "item_id": item, "store_id": store, "timestamp":getCurrentMillis()])
+        }
     }
     
-    func setLocationOf(item: String, atStore store: String, toLocation location: String) {
+    func setLocationOf(item: String, atStore store: String, toLocation location: String, _ unsolicited: Bool = false) {
         // TBD: Do this in a single transaction. It isnt super-important, though, so long as we only send the one message to the backend
         db.delete(from:"store_contents", where:["store_name":store,
                                                 "item":item]);
         db.insert(to:"store_contents", values:["store_name":store,
                                                "item": item,
                                                "location": location]);
+        print("Item \(item) moved to \(location) at store \(store)")
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"item_located_in_aisle", "item_id": item, "store_id": store, "aisle_id": location, "timestamp":getCurrentMillis()])
+        }
     }
     
-    func deleteListItem(named item:String) {
+    func deleteListItem(named item:String, _ unsolicited: Bool = false) {
         db.delete(from:"current_list", where:["item": item]);
         currentList = currentList.filter( { $0 != item } );
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"item_deleted_from_list", "item_id":item, "timestamp":getCurrentMillis()]);
+        }
     }
     
-    func setLocationOf(store name:String, to location:(Double, Double)) {
+    func setLocationOf(store name:String, to location:(Double, Double), _ unsolicited: Bool = true) {
         if stores[name] == nil {
             createStoreNamed(name, atLocation:location);
         } else {
@@ -150,13 +177,57 @@ class DataManager {
                       where:["store_name":name]);
             stores[name] = location;
         }
+        if (!unsolicited) {
+            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": location.0, "longitude": location.1, "timestamp":getCurrentMillis()])
+        }
+
     }
     
-    func createItem(named item: String) {
-        db.insert(to:"item", values:["item":item]);
-        items.append(item);
-        net.queueMessage(["opcode":"item_exists", "item_id":item, "timestamp":getCurrentMillis()])
+    func handleUnsolicitedMessage(withOpcode opcode: String, data: [String:Any]) {
+        DispatchQueue.main.async {
+            self.delegate!.updateTable(after:) {
+                self.handleUnsolicitedMessageOnMainThread(withOpcode: opcode, data:data)
+            }
+        }
     }
+    
+    private func handleUnsolicitedMessageOnMainThread(withOpcode opcode: String, data: [String:Any]) {
+        print("Handling unsolicited message \(opcode) with data \(data)")
+        switch (opcode) {
+            case "sync_response":
+                for submessage in data["messages"] as! [[String:Any]] {
+                    handleUnsolicitedMessageOnMainThread(withOpcode: submessage["opcode"] as! String, data: submessage)
+                }
+                setSync(to: data["timestamp"] as! Int64)
+            case "item_exists":
+                let item = data["item_id"] as! String
+                createItem(named: item, true)
+            case "store_exists":
+                let store_id = data["store_id"] as! String
+                createStoreNamed(store_id, atLocation: (0,0), true)
+            case "store_located_at":
+                let store_id = data["store_id"] as! String
+                let (latitude, longitude) = (data["latitude"] as! Double, data["longitude"] as! Double)
+                setLocationOf(store: store_id, to: (latitude, longitude), true)
+                // This is actually not implemented. You cannot have an aisle in a store with nothing in it
+                // case "aisle_exists_in_store":
+            case "item_deleted_from_list":
+                let item_id = data["item_id"] as! String
+                deleteListItem(named: item_id, true)
+            case "item_located_in_aisle":
+                let (item_id, store_id, aisle_id) = (data["item_id"] as! String, data["store_id"] as! String, data["aisle_id"] as! String)
+                setLocationOf(item: item_id, atStore: store_id, toLocation: aisle_id, true)
+            case "item_removed_from_aisle":
+                let (item_id, store_id) = (data["item_id"] as! String, data["store_id"] as! String)
+                move(item: item_id, toUnknownLocationAtStore: store_id, true);
+            case "item_added_to_list":
+                let item = data["item_id"] as! String
+                addItemToList(named: item, true);
+            default:
+                print("Unhandled unsolicited message \(opcode)")
+            }
+    }
+    
     
     func itemExists(_ item: String) -> Bool {
         return items.contains(where:{$0.caseInsensitiveCompare(item) == .orderedSame});

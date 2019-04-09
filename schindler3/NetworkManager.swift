@@ -19,7 +19,7 @@ import Starscream
 
 
 class NetworkManager : NSObject, WebSocketDelegate {
-    private let hostname: String = "localhost";
+    private let hostname: String = "192.168.1.10";
     private let port: UInt32 = 9007;
     private var dataManager: DataManager;
     private var socket: WebSocket!
@@ -30,9 +30,10 @@ class NetworkManager : NSObject, WebSocketDelegate {
     init(withDataManager: DataManager) {
         dataManager = withDataManager;
         super.init();
-        socket = WebSocket(url: URL(string: "ws://localhost:9007/ws")!)
+        let url = URL(string: "ws://\(hostname):\(port)/ws")
+        socket = WebSocket(url: url!)
         socket.delegate = self
-        
+        print("Connecting to \(url)")
         socket.connect()
     }
     
@@ -124,20 +125,7 @@ class NetworkManager : NSObject, WebSocketDelegate {
             guard let opcode = json["opcode"] as? String else {
                 return
             }
-            handleMessage(withOpcode:opcode, data:json)
-        }
-    }
-    
-    private func handleMessage(withOpcode opcode: String, data message: [String:Any]) {
-        switch (opcode) {
-        case "sync_response":
-            print("Sync message received")
-            for submessage in message["messages"] as! [[String:Any]] {
-                handleMessage(withOpcode: submessage["opcode"] as! String, data: submessage)
-            }
-            dataManager.setSync(to: message["timestamp"] as! Int64)
-        default:
-            print("Unknown \(opcode) message received")
+            dataManager.handleUnsolicitedMessage(withOpcode:opcode, data:json)            
         }
     }
     
