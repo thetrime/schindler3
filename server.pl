@@ -38,18 +38,32 @@ client(ClientId, WebSocket, UserId) :-
         ; Message.opcode == text ->
             Data = Message.data,
             Opcode = Data.opcode,
-            handle_message(Opcode, ClientId, UserId, Data),
+            ( catch(handle_message(Opcode, ClientId, UserId, Data),
+                    Exception,
+                    format(user_error, 'Exception while handling message with opcode ~w: ~p~n', [Opcode, Exception])),
+                true
+            ; otherwise->
+                format(user_error, 'Failure handling message with opcode ~w~n', [Opcode])
+            ),
             % If handled, send the message to all clients logged in as UserId who are not the current client
-            with_output_to(atom(Atom),
-                           json_write(current_output, Message.data, [null({null}), width(0)])),
-            forall(listener(UserId, SomeClientId),
-                   ( SomeClientId \== ClientId ->
-                       thread_send_message(ClientId, thread_send_message(ClientId, send(Atom)))
-                   ; otherwise->
-                       true
-                   ))
+            send_message_to_other_clients(UserId, ClientId, Message.data)
         ),
         client(ClientId, WebSocket, UserId).
+
+%%      send_message_to_other_clients(+UserId,
+%%                                    +ClientId,
+%%                                    +Message).
+%       Send message Message to all clients logged in as UserId except the one called ClientId
+send_message_to_other_clients(UserId, ClientId, Message):-
+        with_output_to(atom(Atom),
+                       json_write(current_output, Message, [null({null}), width(0)])),
+        forall(listener(UserId, SomeClientId),
+               ( SomeClientId \== ClientId ->
+                   thread_send_message(SomeClientId, send(Atom))
+               ; otherwise->
+                   true
+               )).
+
 
 
 dispatch(WebSocket):-
@@ -95,9 +109,8 @@ wait:-
 
 % So, here are the messages we will receive from the clients:
 %   * item_exists(item_id, timestamp)
-%   * store_exists(store_id, timestamp)
+%   * store_exists(store_id, timestamp)     (is this really useful?)
 %   * store_located_at(store_id, latitude, longitude, timestamp)
-%   * aisle_exists_in_store(store_id, aisle_id, timestamp)
 %   * item_added_to_list(item_id, timestamp)
 %   * item_deleted_from_list(item_id, timestamp)
 %   * item_located_in_aisle(item_id, store_id, aisle_id, timestamp)
@@ -108,7 +121,6 @@ wait:-
 %   * item_exists(item_id)
 %   * store_exists(store_id)
 %   * store_located_at(store_id, latitude, longitude)
-%   * aisle_exists_in_store(store_id, aisle_id)
 %   * item_added_to_list(item_id)
 %   * item_deleted_from_list(item_id)
 %   * item_located_in_aisle(item_id, store_id, aisle_id)
@@ -163,13 +175,6 @@ handle_message(store_located_at, _ClientId,UserId, Data):-
         Timestamp = Data.timestamp,
         store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, _DidUpdate).
 
-handle_message(aisle_exists_in_store, _ClientId, UserId, Data):-
-        !,
-        StoreId = Data.store_id,
-        AisleId = Data.aisle_id,
-        Timestamp = Data.timestamp,
-        aisle_exists_in_store(UserId, StoreId, AisleId, Timestamp, _DidUpdate).
-
 handle_message(item_added_to_list, _ClientId, UserId, Data):-
         !,
         ItemId = Data.item_id,
@@ -191,8 +196,8 @@ handle_message(item_located_in_aisle, _ClientId, UserId, Data):-
         item_located_in_aisle(UserId, ItemId, StoreId, AisleId, Timestamp, _DidUpdate).
 
 handle_message(item_removed_from_aisle, _ClientId, UserId, Data):-
+        !,
         ItemId = Data.item_id,
         StoreId = Data.store_id,
         Timestamp = Data.timestamp,
         item_removed_from_aisle(UserId, ItemId, StoreId, Timestamp, _DidUpdate).
-

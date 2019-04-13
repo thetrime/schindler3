@@ -3,7 +3,6 @@
           item_exists/4,
           store_exists/4,
           store_located_at/6,
-          aisle_exists_in_store/5,
           item_added_to_list/4,
           item_deleted_from_list/4,
           item_located_in_aisle/6,
@@ -57,8 +56,9 @@ upgrade_schema_from(Connection, 0):-
         ignore(odbc_query(Connection, 'CREATE TABLE item(user_id VARCHAR, item_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, item_id))', _)),
         ignore(odbc_query(Connection, 'CREATE TABLE list_entry(user_id VARCHAR, item_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, item_id), FOREIGN KEY(user_id, item_id) REFERENCES item(user_id, item_id))', _)),
         ignore(odbc_query(Connection, 'CREATE TABLE store(user_id VARCHAR, store_id VARCHAR, latitude VARCHAR, longitude VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, store_id))', _)),
-        ignore(odbc_query(Connection, 'CREATE TABLE aisle(user_id VARCHAR, store_id VARCHAR, aisle_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, store_id, aisle_id), FOREIGN KEY(user_id, store_id) REFERENCES store(user_id, store_id))', _)),
-        ignore(odbc_query(Connection, 'CREATE TABLE aisle_item(user_id VARCHAR, item_id VARCHAR, store_id VARCHAR, aisle_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, FOREIGN KEY(user_id, item_id) REFERENCES item(user_id, item_id), FOREIGN KEY(user_id, store_id) REFERENCES store(user_id, store_id), FOREIGN KEY(user_id, store_id, aisle_id) REFERENCES aisle(user_id, store_id, aisle_id))', _)).
+        ignore(odbc_query(Connection, 'CREATE TABLE aisle_item(user_id VARCHAR, item_id VARCHAR, store_id VARCHAR, aisle_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, FOREIGN KEY(user_id, item_id) REFERENCES item(user_id, item_id), FOREIGN KEY(user_id, store_id) REFERENCES store(user_id, store_id), UNIQUE(user_id, item_id, store_id))', _)),
+        % FIXME: Hack
+        ??odbc_query(Connection, 'INSERT INTO STORE(user_id, store_id) VALUES (\'matt\', \'Home\')', _).
 
 upgrade_schema_from(Connection, 1):-
         ignore(odbc_query(Connection, 'CREATE TABLE user(user_id VARCHAR, password VARCHAR)', _)),
@@ -93,7 +93,7 @@ select(SQL, Parameters, Selections):-
         build_types(Parameters, Defaults),
         setup_call_cleanup(odbc_prepare(Connection, SQL, Defaults, Statement, []),
                            odbc_execute(Statement, Parameters, Result),
-                           odbc_free_statement(Statement))->
+                           odbc_free_statement(Statement)),
         Result =.. [row|Selections].
 
 
@@ -107,11 +107,6 @@ store_exists(UserId, StoreId, Timestamp, DidUpdate):-
 store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, DidUpdate):-
         state_change('INSERT INTO store(user_id, store_id, latitude, longitude, deleted, last_updated) VALUES (?, ?, ?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET latitude = ?, longitude = ?, deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?',
                      [UserId, StoreId, Latitude, Longitude, Timestamp, Latitude, Longitude, Timestamp, Timestamp, StoreId, UserId],
-                     DidUpdate).
-
-aisle_exists_in_store(UserId, StoreId, AisleId, Timestamp, DidUpdate):-
-        state_change('INSERT INTO aisle(user_id, store_id, aisle_id, deleted, last_updated) VALUES (?, ?, ?, 0, ?) ON CONFLICT(user_id, store_id, aisle_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND aisle_id = ? and user_id = ?',
-                     [UserId, StoreId, AisleId, Timestamp, Timestamp, Timestamp, StoreId, AisleId, UserId],
                      DidUpdate).
 
 item_added_to_list(UserId, ItemId, Timestamp, DidUpdate):-
@@ -140,9 +135,6 @@ sync_message(UserId, Timestamp, _{opcode:item_exists, item_id:ItemId}, MessageTi
 sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:Latitude, longitude:Longitude}, MessageTimestamp):-
         select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]).
 
-sync_message(UserId, Timestamp, _{opcode:aisle_exists_in_store, store_id:StoreId, aisle_id:AisleId}, MessageTimestamp):-
-        select('SELECT store_id, aisle_id, last_updated FROM aisle WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [StoreId, AisleId, MessageTimestamp]).
-
 sync_message(UserId, Timestamp, _{opcode:Opcode, item_id:ItemId}, MessageTimestamp):-
         select('SELECT item_id, last_updated, deleted FROM list_entry WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp, Deleted]),
         ( Deleted == 0 ->
@@ -168,7 +160,7 @@ login(UserId, Password):-
 
 pop:-
         get_connection(Connection),
-        ??odbc_prepare(Connection, 'INSERT INTO list_entry(last_updated) VALUES(?)', [bigint], Statement),
+        odbc_prepare(Connection, 'INSERT INTO list_entry(last_updated) VALUES(?)', [bigint], Statement),
         odbc_execute(Statement, [1554394021738], _),
         odbc_query(Connection, 'SELECT last_updated FROM list_entry', Row),
         writeln(Row).
