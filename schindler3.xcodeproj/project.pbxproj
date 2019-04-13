@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A22AC878610171A0DDB2B41 /* Pods_schindler3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */; };
 		F40185EE203B1DAF004107FC /* ListButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40185ED203B1DAF004107FC /* ListButton.swift */; };
 		F4B17EF62041AE3100EC27ED /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EF52041AE3100EC27ED /* DataManager.swift */; };
 		F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */; };
@@ -25,6 +26,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-schindler3.debug.xcconfig"; path = "Target Support Files/Pods-schindler3/Pods-schindler3.debug.xcconfig"; sourceTree = "<group>"; };
+		BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_schindler3.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-schindler3.release.xcconfig"; path = "Target Support Files/Pods-schindler3/Pods-schindler3.release.xcconfig"; sourceTree = "<group>"; };
 		F40185ED203B1DAF004107FC /* ListButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListButton.swift; sourceTree = "<group>"; };
 		F4B17EF52041AE3100EC27ED /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
@@ -50,16 +54,28 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */,
+				8A22AC878610171A0DDB2B41 /* Pods_schindler3.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		76579E1D07078E219C50480D /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */,
+				C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		F4B17EF72041BAF900EC27ED /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */,
+				BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -70,6 +86,7 @@
 				F4D665E2203729280017E0CA /* schindler3 */,
 				F4D665E1203729280017E0CA /* Products */,
 				F4B17EF72041BAF900EC27ED /* Frameworks */,
+				76579E1D07078E219C50480D /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -110,9 +127,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F4D665F2203729280017E0CA /* Build configuration list for PBXNativeTarget "schindler3" */;
 			buildPhases = (
+				8425DEA50CE5CF1679982461 /* [CP] Check Pods Manifest.lock */,
 				F4D665DC203729280017E0CA /* Sources */,
 				F4D665DD203729280017E0CA /* Frameworks */,
 				F4D665DE203729280017E0CA /* Resources */,
+				CC7842A5B67DB177EB579EF9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -130,7 +149,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0920;
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 0930;
 				ORGANIZATIONNAME = "Matt Lilley";
 				TargetAttributes = {
 					F4D665DF203729280017E0CA = {
@@ -169,6 +188,53 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		8425DEA50CE5CF1679982461 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-schindler3-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		CC7842A5B67DB177EB579EF9 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-schindler3/Pods-schindler3-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Starscream/Starscream.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Starscream.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-schindler3/Pods-schindler3-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F4D665DC203729280017E0CA /* Sources */ = {
@@ -225,6 +291,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -232,6 +299,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -282,6 +350,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -289,6 +358,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -320,6 +390,7 @@
 		};
 		F4D665F3203729280017E0CA /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -335,6 +406,7 @@
 		};
 		F4D665F4203729280017E0CA /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
