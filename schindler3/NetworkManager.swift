@@ -108,9 +108,11 @@ class NetworkManager : NSObject, WebSocketDelegate {
         }
         // If we get here, then we sent our backlog. We can now send a sync message directly (do not queue this)
         attemptImmediateTransmission(ofObject: ["opcode":"sync", "timestamp":dataManager.syncPoint()])
+        dataManager.indicateConnected()
     }
     
     func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
+        dataManager.indicateDisconnected()
         generation = generation + 1
         print("websocket is disconnected: \(error?.localizedDescription)")
         DispatchQueue.global(qos: DispatchQoS.QoSClass.background).asyncAfter(deadline: .now() + 5, execute: {

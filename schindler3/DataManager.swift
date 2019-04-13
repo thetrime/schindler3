@@ -22,6 +22,21 @@ class DataManager {
     private var net: NetworkManager!;
     var delegate: ListViewController?;
     
+    var currentStore: Store! {
+        didSet {
+            print("setting navigation title");
+            delegate!.movedStore(to:currentStore.name);
+        }
+    }
+    
+    func determineStore(near location: (Double, Double)) {
+        let newStore = findStoreClosestTo(location);
+        if (newStore != currentStore.name) {
+            currentStore = loadStoreNamed(newStore);
+        }
+    }
+    
+    
     init() {
         prepareSchema();
         loadStoreLocations();
@@ -35,14 +50,14 @@ class DataManager {
     }
     
     private func prepareSchema() {
-        db.createTable(named: "item", withColumns: ["item": "text"]);
-        db.createTable(named: "current_list", withColumns: ["item": "TEXT"]);
+        db.createTable(named: "item", withColumns: ["item": "text"], andUniqueConstraints: [["item"]]);
+        db.createTable(named: "current_list", withColumns: ["item": "TEXT"], andUniqueConstraints: [["item"]]);
         db.createTable(named: "store", withColumns: ["store_name": "TEXT",
                                                       "latitude": "FLOAT",
-                                                      "longitude": "FLOAT"]);
+                                                      "longitude": "FLOAT"], andUniqueConstraints: [["store_name"]]);
         db.createTable(named: "store_contents", withColumns: ["store_name": "TEXT",
                                                               "item": "TEXT",
-                                                              "location": "TEXT"]);        
+                                                              "location": "TEXT"], andUniqueConstraints: [["store_name", "item", "location"]]);
         db.createTable(named: "outgoing_messages", withColumns: ["local_id": "INTEGER PRIMARY KEY",
                                                                  "message": "TEXT"]);
         db.createTable(named: "sync_state", withColumns: ["timestamp": "BIGINTEGER"]);
@@ -116,7 +131,10 @@ class DataManager {
     
     func addItemToList(named item:String, _ unsolicited: Bool = false) {
         db.insert(to:"current_list", values:["item": item]);
-        currentList.append(item);
+        if (!currentList.contains(item)) {
+            print("list \(currentList) does not contain \(item)")
+            currentList.append(item);
+        }
         if (!items.contains(item)) {
             createItem(named:item, unsolicited);
         }
@@ -127,7 +145,9 @@ class DataManager {
 
     func createItem(named item: String, _ unsolicited: Bool = true) {
         db.insert(to:"item", values:["item":item]);
-        items.append(item);
+        if (!items.contains(item)) {
+            items.append(item);
+        }
         if (!unsolicited) {
             net.queueMessage(["opcode":"item_exists", "item_id":item, "timestamp":getCurrentMillis()])
         }
@@ -137,11 +157,22 @@ class DataManager {
         return Int64(Date().timeIntervalSince1970 * 1000)
     }
     
+    func indicateConnected() {
+        delegate!.indicateConnected()
+    }
+    
+    func indicateDisconnected() {
+        delegate!.indicateDisconnected()
+    }
+    
     func move(item: String, toUnknownLocationAtStore store: String, _ unsolicited: Bool = false) {
         db.delete(from:"store_contents", where:["store_name":store,
                                                 "item":item]);
         if (!unsolicited) {
             net.queueMessage(["opcode": "item_removed_from_aisle", "item_id": item, "store_id": store, "timestamp":getCurrentMillis()])
+        }
+        if (store == currentStore.name) {
+            currentStore.moveToUnknownLocation(item: item)
         }
     }
     
@@ -155,6 +186,9 @@ class DataManager {
         print("Item \(item) moved to \(location) at store \(store)")
         if (!unsolicited) {
             net.queueMessage(["opcode":"item_located_in_aisle", "item_id": item, "store_id": store, "aisle_id": location, "timestamp":getCurrentMillis()])
+        }
+        if (store == currentStore.name) {
+            currentStore.setItemLocation(item, to: location);
         }
     }
     
@@ -242,6 +276,7 @@ class DataManager {
     }
     
     func getCurrentList() -> [String] {
+        //print("Current list::: \(currentList)")
         return currentList;
     }
 

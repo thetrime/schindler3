@@ -28,15 +28,20 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     private var currentLocation: (Double, Double) = (0,0);
     private var dataManager = DataManager();
     
-    private var currentStore: Store! {
-        didSet {
-            print("setting navigation title");
-            navigationItem.title = currentStore.name;
-        }
-    }
     
     //MARK: Methods
     
+    func movedStore(to store_id: String) {
+        navigationItem.title = store_id;
+    }
+    
+    func indicateConnected() {
+        navigationController?.navigationBar.barTintColor = UIColor.green
+    }
+    
+    func indicateDisconnected() {
+        navigationController?.navigationBar.barTintColor = UIColor.red
+    }
     
     private func updateTableView() {
         let temporaryItem = searchFilter;
@@ -53,7 +58,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 // The filter IS empty so we only want to display items actually on the current list
                 continue;
             }
-            if let aisle = currentStore.getLocationOf(item) {
+            print("Must display \(item)")
+            if let aisle = dataManager.currentStore.getLocationOf(item) {
                 // This item is in an aisle already
                 if newLocations[aisle] != nil {
                     newLocations[aisle]?.append(item);
@@ -109,21 +115,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //tableView.reloadData();
     }
     
-    private func determineStore() {
-        let newStore = dataManager.findStoreClosestTo(currentLocation);
-        if (newStore != currentStore.name) {
-            updateTable(after:) {
-                currentStore = dataManager.loadStoreNamed(newStore);
-            }
-        }
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         dataManager.setDelegate(self)
        // tableView.tableFooterView = UIView();
         updateTable(after:) {
-            currentStore = dataManager.loadStoreNamed("Home");
+            dataManager.currentStore = dataManager.loadStoreNamed("Home");
         }
         self.locationManager.requestWhenInUseAuthorization();
         if CLLocationManager.locationServicesEnabled() {
@@ -169,7 +166,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         guard let items = locations[section] else {
             fatalError("Request for non-existent section \(section)?");
         }
-        print("Request for item at section \(indexPath.section), row \(indexPath.row): item \(items[indexPath.row]) This section contains \(items)");
+        //print("Request for item at section \(indexPath.section), row \(indexPath.row): item \(items[indexPath.row]) This section contains \(items)");
         cell.label.text = items[indexPath.row];
         if (dataManager.getCurrentList().contains(items[indexPath.row])) {
             cell.button.type = .get(items[indexPath.row]);
@@ -198,7 +195,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         let removeAction = UIContextualAction(style: .normal, title: "Remove") { (action, view, handler) in
             print("Remove Action Tapped");
             self.updateTable {
-                self.currentStore.moveToUnknownLocation(item:item);
+                self.dataManager.move(item:item, toUnknownLocationAtStore:self.dataManager.currentStore.name);
             }
             handler(true);
         }
@@ -234,7 +231,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 print("Reloading row \(button.row) in section \(button.section)")
                 tableView.reloadRows(at: [IndexPath(row: button.row, section: button.section)], with: .automatic);
             } else if case .get(let item) = button.type {
-                if currentStore.getLocationOf(item) == nil {
+                if dataManager.currentStore.getLocationOf(item) == nil {
                     self.performSegue(withIdentifier:"LocateItem", sender:item);
                 }
                 dataManager.deleteListItem(named: item);
@@ -264,7 +261,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         if newLocation.distance(from:CLLocation(latitude: currentLocation.0, longitude: currentLocation.1)) > 10 {
             print("You have moved")
             currentLocation = (newLocation.coordinate.latitude, newLocation.coordinate.longitude);
-            determineStore();
+            updateTable(after:) {
+                dataManager.determineStore(near:currentLocation);
+            }
         }
     }
     
@@ -291,12 +290,16 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             locationViewController.determineLocationOf(item, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(item)", then: {
                 let locatedItem = $0;
                 let location = $1;
-                self.updateTable(after:) {self.currentStore?.setItemLocation(locatedItem, to: location);}})
+                self.updateTable(after:) {
+                    self.dataManager.setLocationOf(item: locatedItem, atStore: self.dataManager.currentStore.name, toLocation: location)
+                    //self.dataManager.currentStore?.setItemLocation(locatedItem, to: location);
+                    
+                }})
         } else if (segue.identifier == "DetermineStore") {
             locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().sorted(), withTitle: "Where are you?", then: {
                 let location = $1;
                 self.dataManager.setLocationOf(store: location, to:self.currentLocation);                
-                self.updateTable(after:) {self.currentStore = self.dataManager.loadStoreNamed(location) }
+                self.updateTable(after:) {self.dataManager.currentStore = self.dataManager.loadStoreNamed(location) }
             });
         }
     }

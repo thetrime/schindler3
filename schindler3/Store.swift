@@ -28,7 +28,7 @@ class Store {
             aisles[aisle] = [item];
         }
         locations[item] = aisle;
-        dataManager.setLocationOf(item: item, atStore: name, toLocation:aisle);
+        //dataManager.setLocationOf(item: item, atStore: name, toLocation:aisle);
     }
     
     func getLocationOf(_ item: String) -> String? {
@@ -40,6 +40,6 @@ class Store {
             aisles[oldLocation] = aisles[oldLocation]!.filter({ $0 != item });
         }
         locations[item] = nil;
-        dataManager.move(item: item, toUnknownLocationAtStore: name);
+        //dataManager.move(item: item, toUnknownLocationAtStore: name);
     }
 }

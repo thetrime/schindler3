@@ -96,11 +96,18 @@ class SQLiteDatabase {
         }
     }
     
-    public func createTable(named name: String, withColumns specs: [String:String]) {
+    public func createTable(named name: String, withColumns specs: [String:String], andUniqueConstraints constraints:[[String]] = []) {
         var columns: [String] = [];
         var stmt:OpaquePointer?;
         for (name, type) in specs {
             columns.append("\(name) \(type)")
+        }
+        for columnList in constraints {
+            var constraint : [String] = []
+            for column in columnList {
+                constraint.append(column)
+            }
+            columns.append("UNIQUE(\(constraint.joined(separator: ", ")))")
         }
         print("CREATE TABLE IF NOT EXISTS \(name) (\(columns.joined(separator: ", ")))");
         if sqlite3_prepare(db, "CREATE TABLE IF NOT EXISTS \(name) (\(columns.joined(separator: ", ")))", -1, &stmt, nil) != SQLITE_OK {
@@ -117,6 +124,7 @@ class SQLiteDatabase {
     func delete(from table: String, where w:[String:Any] = [:]) {
         var stmt:OpaquePointer?;
         let (whereClause, whereParameters) = makeWhereClause(w);
+        print("DELETE FROM \(table) \(whereClause)")
         if sqlite3_prepare(db, "DELETE FROM \(table) \(whereClause)", -1, &stmt, nil) != SQLITE_OK {
             printLastError("delete");
             return;
@@ -197,8 +205,9 @@ class SQLiteDatabase {
         }
         let columnNames = names.joined(separator: ",");
         let questionMarks = Array(repeating: "?", count: names.count).joined(separator: ",");
-        print("INSERT INTO \(table)(\(columnNames)) VALUES(\(questionMarks)) -> \(values)")
-        if sqlite3_prepare(db, "INSERT INTO \(table)(\(columnNames)) VALUES(\(questionMarks))", -1, &stmt, nil) != SQLITE_OK {
+        // Note that we use REPLACE INTO instead of INSERT INTO to simplify getting out-of-band messages that would insert duplicate values
+        print("REPLACE INTO \(table)(\(columnNames)) VALUES(\(questionMarks)) -> \(values)")
+        if sqlite3_prepare(db, "REPLACE INTO \(table)(\(columnNames)) VALUES(\(questionMarks))", -1, &stmt, nil) != SQLITE_OK {
             printLastError("insert");
             return -1;
         }
