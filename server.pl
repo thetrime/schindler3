@@ -8,10 +8,17 @@
 
 
 :- http_handler(root(ws), http_upgrade_to_websocket(ws, []), [spawn([])]).
+:- http_handler(root('.well-known'), acme, [prefix, priority(1)]).
+
 :-ensure_loaded(testing).
 :-ensure_loaded(database).
 
 :-dynamic(listener/2).
+
+acme(Request):-
+        memberchk(path(Path), Request),
+        format(atom(ActualPath), 'acme~w', [Path]),
+        http_reply_file(ActualPath, [], Request).
 
 ws(Websocket):-
         format(user_error, 'New connection received~n', []),
@@ -21,13 +28,16 @@ ws(Websocket):-
         UserId = Message.data.user_id,
         Password = Message.data.password,
         format(user_error, 'Login request for user ~w~n', [UserId]),
-        login(UserId, Password),
-        format(user_error, 'Login successful for user ~w~n', [UserId]),
-        setup_call_cleanup((thread_create(dispatch(Websocket), ClientId, [detached(true)]),
-                            assert(listener(UserId, ClientId))
-                           ),
-                           client(ClientId, Websocket, UserId),
-                           thread_send_message(ClientId, close)).
+        ( login(UserId, Password)->
+            format(user_error, 'Login successful for user ~w~n', [UserId]),
+            setup_call_cleanup((thread_create(dispatch(Websocket), ClientId, [detached(true)]),
+                                assert(listener(UserId, ClientId))
+                               ),
+                               client(ClientId, Websocket, UserId),
+                               thread_send_message(ClientId, close))
+        ; otherwise->
+            ws_send(Websocket, text('{"opcode":"login_denied"}'))
+        ).
 
 client(ClientId, WebSocket, UserId) :-
         format(user_error, 'Waiting for message from user ~w (client ~w)~n', [UserId, ClientId]),
@@ -83,11 +93,14 @@ dispatch(WebSocket):-
 
 
 run:-
-         prepare_database,
+        prepare_database,
         prolog_server(9998, []),
         http_server(http_dispatch, [port(9007)]),
-        % ACME. Assumes port 80 is mapped to 8080 using something like "iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080"
-        http_server(http_dispatch, [port(8080)]).
+        % openssl req -nodes -subj '/CN=192.168.1.10' -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3650
+        http_server(http_dispatch, [port(9008), ssl([certificate_file('cert.pem'), key_file('key.pem')])]),
+%        % ACME. Assumes port 80 is mapped to 8080 using something like "iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080"
+        %        http_server(http_dispatch, [port(8080)]).
+        true.
 
 wait:-
         thread_get_message(_).
