@@ -13,6 +13,8 @@
 		F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */; };
 		F4B17EFB2041BE8F00EC27ED /* SQLiteDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */; };
 		F4B17EFD2042DCA700EC27ED /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EFC2042DCA700EC27ED /* NetworkManager.swift */; };
+		F4C23FB32261E1FB00FDBF21 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4C23FB22261E1FB00FDBF21 /* LoginViewController.swift */; };
+		F4C23FB722630D4B00FDBF21 /* schindlerx.strangled.net.der in Resources */ = {isa = PBXBuildFile; fileRef = F4C23FB622630D4A00FDBF21 /* schindlerx.strangled.net.der */; };
 		F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4D665E3203729280017E0CA /* AppDelegate.swift */; };
 		F4D665E9203729280017E0CA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4D665E7203729280017E0CA /* Main.storyboard */; };
 		F4D665EB203729280017E0CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4D665EA203729280017E0CA /* Assets.xcassets */; };
@@ -34,6 +36,8 @@
 		F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDatabase.swift; sourceTree = "<group>"; };
 		F4B17EFC2042DCA700EC27ED /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
+		F4C23FB22261E1FB00FDBF21 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
+		F4C23FB622630D4A00FDBF21 /* schindlerx.strangled.net.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = schindlerx.strangled.net.der; sourceTree = "<group>"; };
 		F4D665E0203729280017E0CA /* schindler3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = schindler3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4D665E3203729280017E0CA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4D665E8203729280017E0CA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -67,7 +71,6 @@
 				841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */,
 				C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -83,6 +86,7 @@
 		F4D665D7203729280017E0CA = {
 			isa = PBXGroup;
 			children = (
+				F4C23FB622630D4A00FDBF21 /* schindlerx.strangled.net.der */,
 				F4D665E2203729280017E0CA /* schindler3 */,
 				F4D665E1203729280017E0CA /* Products */,
 				F4B17EF72041BAF900EC27ED /* Frameworks */,
@@ -113,6 +117,7 @@
 				F4DE16292037378B003C6A3B /* Item.swift */,
 				F4EB81C7203C448C003625D0 /* LocationViewController.swift */,
 				F4D665E7203729280017E0CA /* Main.storyboard */,
+				F4C23FB22261E1FB00FDBF21 /* LoginViewController.swift */,
 				F4D665EA203729280017E0CA /* Assets.xcassets */,
 				F4D665EC203729280017E0CA /* LaunchScreen.storyboard */,
 				F4D665EF203729280017E0CA /* Info.plist */,
@@ -181,6 +186,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4C23FB722630D4B00FDBF21 /* schindlerx.strangled.net.der in Resources */,
 				F4D665EE203729280017E0CA /* LaunchScreen.storyboard in Resources */,
 				F4D665EB203729280017E0CA /* Assets.xcassets in Resources */,
 				F4D665E9203729280017E0CA /* Main.storyboard in Resources */,
@@ -241,6 +247,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4C23FB32261E1FB00FDBF21 /* LoginViewController.swift in Sources */,
 				F4DE162C20373BDD003C6A3B /* Store.swift in Sources */,
 				F4DE162A2037378B003C6A3B /* Item.swift in Sources */,
 				F4D665E4203729280017E0CA /* AppDelegate.swift in Sources */,

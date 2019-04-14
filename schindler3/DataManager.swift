@@ -22,6 +22,9 @@ class DataManager {
     private var net: NetworkManager!;
     var delegate: ListViewController?;
     
+    var userId: String = "matt";
+    var password: String = "notverysecretatall";
+    
     var currentStore: Store! {
         didSet {
             print("setting navigation title");
@@ -47,6 +50,13 @@ class DataManager {
     
     func setDelegate(_ d: ListViewController) {
         delegate = d;
+    }
+    
+    func configure(_ userId: String, _ password: String) -> Bool {
+        self.userId = userId
+        self.password = password
+    
+        return true
     }
     
     private func prepareSchema() {
@@ -257,6 +267,13 @@ class DataManager {
             case "item_added_to_list":
                 let item = data["item_id"] as! String
                 addItemToList(named: item, true);
+            case "login_denied":
+                let defaults = UserDefaults.standard
+                defaults.set(nil, forKey: "username")
+                defaults.set(nil, forKey: "password")
+                delegate!.login()
+        case "nuke":
+                db.nuke()
             default:
                 print("Unhandled unsolicited message \(opcode)")
             }

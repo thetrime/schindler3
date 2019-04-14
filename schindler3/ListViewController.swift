@@ -115,9 +115,21 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //tableView.reloadData();
     }
     
+    func login() {
+        let defaults = UserDefaults.standard
+        if let userId = defaults.string(forKey:"user_id"), let password = defaults.string(forKey:"password") {
+            dataManager.configure(userId, password)
+        } else {
+            self.performSegue(withIdentifier: "Login", sender: nil);
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("main view has loaded")
         dataManager.setDelegate(self)
+        login()
+        
        // tableView.tableFooterView = UIView();
         updateTable(after:) {
             dataManager.currentStore = dataManager.loadStoreNamed("Home");
@@ -274,6 +286,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        if let loginViewController = segue.destination as? LoginViewController {
+            loginViewController.delegate = self;
+            return
+        }
         guard let navigationViewController = segue.destination as? UINavigationController else {
             print("Unexpected segue \(segue.destination)");
             return;

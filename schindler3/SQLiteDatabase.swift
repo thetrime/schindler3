@@ -11,25 +11,25 @@ import SQLite3;
 
 class SQLiteDatabase {
     private var db: OpaquePointer?;
-
+    private var dbFile: String
     init (file: String) {
+        dbFile = file
         let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent(file)
-        /* This next clump deletes the entire DB */
-        print("Filename: \(fileURL.path)");
-        let freshDB = true
-        if (freshDB) {
-            do {
-                let path = fileURL.path;
-                try FileManager.default.removeItem(atPath:path);
-            } catch let error as NSError {
-                print("Ooops! Something went wrong: \(error)")
-            }
-        }
-        
-        /* End clump */
+        print("Database filename: \(fileURL.path)");
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("error opening database");
         }
+    }
+    
+    func nuke() {
+        let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathComponent(dbFile)
+        do {
+            let path = fileURL.path;
+            try FileManager.default.removeItem(atPath:path);
+        } catch let error as NSError {
+            print("Ooops! Something went wrong: \(error)")
+        }
+        exit(0)
     }
     
     private func printLastError(_ context: String) {
