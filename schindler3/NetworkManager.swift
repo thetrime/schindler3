@@ -128,10 +128,17 @@ class NetworkManager : NSObject, WebSocketDelegate {
         dataManager.indicateDisconnected()
         generation = generation + 1
         print("websocket is disconnected: \(error?.localizedDescription)")
-        DispatchQueue.global(qos: DispatchQoS.QoSClass.background).asyncAfter(deadline: .now() + 5, execute: {
-                socket.connect();
-                })
-
+        tryToReconnect();
+    }
+    
+    private func tryToReconnect() {
+        if Reachability.isConnectedToNetwork() {
+            socket.connect();
+        } else {
+            DispatchQueue.global(qos: DispatchQoS.QoSClass.background).asyncAfter(deadline: .now() + 2, execute: {
+                self.tryToReconnect()
+            })
+        }
     }
     
     func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
