@@ -94,7 +94,7 @@ dispatch(WebSocket):-
 
 run:-
         prepare_database,
-        prolog_server(9998, []),
+        prolog_server(9997, []),
         http_server(http_dispatch, [port(9007)]),
         % openssl req -nodes -subj '/CN=192.168.1.10' -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3650
         http_server(http_dispatch, [port(9008), ssl([certificate_file('cert.pem'), key_file('key.pem')])]),
