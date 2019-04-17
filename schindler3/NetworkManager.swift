@@ -19,8 +19,14 @@ import Starscream
 
 
 class NetworkManager : NSObject, WebSocketDelegate {
+    
+    /*
     private let hostname: String = "schindlerx.strangled.net";
     private let port: UInt32 = 9008;
+ */
+    private let hostname: String = "192.168.1.10";
+    private let port: UInt32 = 9007;
+
     private var dataManager: DataManager;
     private var socket: WebSocket!
     private var isSynchronized = false;
@@ -30,10 +36,10 @@ class NetworkManager : NSObject, WebSocketDelegate {
     init(withDataManager: DataManager) {
         dataManager = withDataManager;
         super.init();
-        let url = URL(string: "wss://\(hostname):\(port)/ws")
+        let url = URL(string: "ws://\(hostname):\(port)/ws")
         socket = WebSocket(url: url!)
         socket.delegate = self
-        
+        /*
         if let url = Bundle.main.url(forResource: hostname, withExtension: "der") {
             if let data = try? Data(contentsOf:url) {
                 print("SSL pinning enabled")
@@ -44,7 +50,7 @@ class NetworkManager : NSObject, WebSocketDelegate {
         } else {
             print("No such certificate")
         }
-
+         */
         socket.disableSSLCertValidation = true
         print("Connecting to \(url)")
         socket.connect()

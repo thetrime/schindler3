@@ -34,7 +34,10 @@ class DataManager {
     
     func determineStore(near location: (Double, Double)) {
         let newStore = findStoreClosestTo(location);
+        print("moving to \(newStore) from \(currentStore.name)")
         if (newStore != currentStore.name) {
+            clearDeferredItems()
+            print("Deferrals cleared")
             currentStore = loadStoreNamed(newStore);
         }
     }
@@ -60,11 +63,12 @@ class DataManager {
     }
     
     private func prepareSchema() {
+
         db.createTable(named: "item", withColumns: ["item": "text"], andUniqueConstraints: [["item"]]);
         db.createTable(named: "current_list", withColumns: ["item": "TEXT"], andUniqueConstraints: [["item"]]);
         db.createTable(named: "store", withColumns: ["store_name": "TEXT",
                                                       "latitude": "FLOAT",
-                                                      "longitude": "FLOAT"], andUniqueConstraints: [["store_name"]]);
+                                                      "longitude": "FLOAT"], andUniqueConstraints: [["store_name"], ["latitude", "longitude"]]);
         db.createTable(named: "store_contents", withColumns: ["store_name": "TEXT",
                                                               "item": "TEXT",
                                                               "location": "TEXT"], andUniqueConstraints: [["store_name", "item", "location"]]);
@@ -73,6 +77,7 @@ class DataManager {
         db.createTable(named: "sync_state", withColumns: ["timestamp": "BIGINTEGER"]);
         db.createTable(named: "messages", withColumns: ["message_id": "INTEGER PRIMARY KEY",
                                                         "message": "TEXT"]);
+        db.createTable(named: "deferred_items", withColumns: ["item": "TEXT"], andUniqueConstraints: [["item"]]);
         syncPoint()
     }
     
@@ -173,6 +178,24 @@ class DataManager {
     
     func indicateDisconnected() {
         delegate!.indicateDisconnected()
+    }
+    
+    func clearDeferredItems() {
+        db.delete(from:"deferred_items")
+    }
+    
+    func deferItem(item: String) {
+        db.insert(to:"deferred_items", values: ["item":item]);
+        // No need to tell the server about this
+    }
+    
+    func deferredItems() -> [String] {
+        var deferredItems: [String] = []
+        for row in db.select(from:"deferred_items", values:["item"]) {
+            deferredItems.append(row["item"] as! String)
+        }
+        return deferredItems
+        
     }
     
     func move(item: String, toUnknownLocationAtStore store: String, _ unsolicited: Bool = false) {

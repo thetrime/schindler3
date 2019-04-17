@@ -43,9 +43,14 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         navigationController?.navigationBar.barTintColor = UIColor.red
     }
     
+    private func debug(_ message:String) {
+        //print(message)
+    }
+    
     private func updateTableView() {
         let temporaryItem = searchFilter;
         let filter = searchFilter.lowercased();
+        let deferredItems = dataManager.deferredItems()
         var newLocations: [String: [String]] = [:];
         // The list has a temporary item if the search bar is not empty and the thing in the search bar doesn't match anything in the list
         let hasTemporaryItem = filter != "" && !dataManager.itemExists(filter);
@@ -57,6 +62,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             if (filter == "" && !dataManager.getCurrentList().contains(item)) {
                 // The filter IS empty so we only want to display items actually on the current list
                 continue;
+            }
+            if (deferredItems.contains(item)) {
+                // The item is deferred. Skip it
+                continue
             }
             print("Must display \(item)")
             if let aisle = dataManager.currentStore.getLocationOf(item) {
@@ -85,23 +94,22 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         // * Finally, if any sections have been added they are loaded
         
         let (deletedSections, insertedSections) = changesBetween(sections, and:newSections);
-        print("Updated Locations: \(newLocations)")
-        print("Sections is changing from \(sections) to \(newSections), and in the process, changing as follows:")
-        print("   * Deleted sections: \(deletedSections)");
-        print("   * Inserted sections: \(insertedSections)");
-        
+        debug("Updated Locations: \(newLocations)")
+        debug("Sections is changing from \(sections) to \(newSections), and in the process, changing as follows:")
+        debug("   * Deleted sections: \(deletedSections)");
+        debug("   * Inserted sections: \(insertedSections)");
         for sectionTitle in Set(sections).intersection(Set(newSections)) {
-            print("Section \(sectionTitle) is changing from \(locations[sectionTitle]!) to \(newLocations[sectionTitle]!)")
+            debug("Section \(sectionTitle) is changing from \(locations[sectionTitle]!) to \(newLocations[sectionTitle]!)")
             let (deletedRows, insertedRows) = changesBetween(locations[sectionTitle]!, and:newLocations[sectionTitle]!);
             let sectionIndex = sections.index(of: sectionTitle)!;
             let newSectionIndex = newSections.index(of: sectionTitle)!
             let modifiedRows = Set(deletedRows).intersection(Set(insertedRows));
             let onlyDeletedRows = Set(deletedRows).subtracting(modifiedRows);
             let onlyInsertedRows = Set(insertedRows).subtracting(modifiedRows);
-            print("   * Section \(sectionTitle) (was index \(sectionIndex) but is now \(newSectionIndex))");
-            print("      * Deleted \(onlyDeletedRows) from section \(sectionIndex)");
-            print("      * Inserted \(onlyInsertedRows) to section \(newSectionIndex)");
-            print("      * Updated \(modifiedRows) on section \(sectionIndex)");
+            debug("   * Section \(sectionTitle) (was index \(sectionIndex) but is now \(newSectionIndex))");
+            debug("      * Deleted \(onlyDeletedRows) from section \(sectionIndex)");
+            debug("      * Inserted \(onlyInsertedRows) to section \(newSectionIndex)");
+            debug("      * Updated \(modifiedRows) on section \(sectionIndex)");
             tableView.deleteRows(at: onlyDeletedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.automatic);
             tableView.insertRows(at: onlyInsertedRows.map({IndexPath.init(row: $0, section:newSectionIndex)}), with:.automatic);
             tableView.reloadRows(at: modifiedRows.map({IndexPath.init(row: $0, section:sectionIndex)}), with:.none);
@@ -212,7 +220,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             handler(true);
         }
         let deferAction = UIContextualAction(style: .normal, title: "Defer") { (action, view, handler) in
-            print("Defer Action Tapped");
+            self.updateTable {
+                self.dataManager.deferItem(item:item);
+            }
             handler(true);
         }
         removeAction.backgroundColor = .red;
@@ -270,8 +280,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     // MARK: CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLocation: CLLocation = manager.location else { return }
-        if newLocation.distance(from:CLLocation(latitude: currentLocation.0, longitude: currentLocation.1)) > 10 {
-            print("You have moved")
+        let distanceInMetres = newLocation.distance(from:CLLocation(latitude: currentLocation.0, longitude: currentLocation.1))
+        if distanceInMetres > 100 {
+            print("You have moved from \(currentLocation.0),\(currentLocation.1) to \(newLocation.coordinate.latitude),\(newLocation.coordinate.longitude), a distance of \(distanceInMetres)m")
             currentLocation = (newLocation.coordinate.latitude, newLocation.coordinate.longitude);
             updateTable(after:) {
                 dataManager.determineStore(near:currentLocation);
@@ -315,7 +326,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().sorted(), withTitle: "Where are you?", then: {
                 let location = $1;
                 self.dataManager.setLocationOf(store: location, to:self.currentLocation);                
-                self.updateTable(after:) {self.dataManager.currentStore = self.dataManager.loadStoreNamed(location) }
+                self.updateTable(after:) {
+                    self.dataManager.determineStore(near:self.currentLocation);
+                }            
             });
         }
     }
