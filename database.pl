@@ -144,7 +144,7 @@ sync_message(UserId, Timestamp, _{opcode:Opcode, item_id:ItemId}, MessageTimesta
         ).
 
 sync_message(UserId, Timestamp, _{opcode:Opcode, item_id:ItemId, store_id:StoreId, aisle_id:AisleId}, MessageTimestamp):-
-        select('SELECT item_id, store_id, aisle_id, CAST(last_updated AS BIGINTEGER), deleted FROM aisle_item WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, StoreId, AisleId, MessageTimestamp, Deleted]),
+        select('SELECT item_id, store_id, aisle_id, last_updated, deleted FROM aisle_item WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, StoreId, AisleId, MessageTimestamp, Deleted]),
         ( Deleted == 0 ->
             Opcode = item_located_in_aisle
         ; otherwise->
