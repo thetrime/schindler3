@@ -56,9 +56,9 @@ client(ClientId, WebSocket, UserId) :-
                 format(user_error, 'Failure handling message with opcode ~w~n', [Opcode])
             ),
             % If handled, send the message to all clients logged in as UserId who are not the current client
-            send_message_to_other_clients(UserId, ClientId, Message.data)
-        ),
-        client(ClientId, WebSocket, UserId).
+            send_message_to_other_clients(UserId, ClientId, Message.data),
+            client(ClientId, WebSocket, UserId)
+        ).
 
 %%      send_message_to_other_clients(+UserId,
 %%                                    +ClientId,
@@ -149,6 +149,12 @@ wait:-
 % aisle_item(store_id varchar, aisle_id varchar, item_id varchar, deleted boolean, last_updated timestamp)
 
 % TBD: We need a mechanism for sending these messages to any other people listening after we update the database without echoing them back to the originator
+
+nuke(UserId):-
+        with_output_to(atom(Atom),
+                       json_write(current_output, _{opcode: nuke}, [null({null}), width(0)])),
+        forall(listener(UserId, SomeClientId),
+               thread_send_message(SomeClientId, send(Atom))).
 
 
 handle_message(sync, ClientId, UserId, Data):-
