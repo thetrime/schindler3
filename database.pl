@@ -1,5 +1,6 @@
 :-module(database,
          [login/2,
+          import_from_old_database/1,
           item_exists/4,
           store_exists/4,
           store_located_at/6,
@@ -58,7 +59,7 @@ upgrade_schema_from(Connection, 0):-
         ignore(odbc_query(Connection, 'CREATE TABLE store(user_id VARCHAR, store_id VARCHAR, latitude VARCHAR, longitude VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, store_id))', _)),
         ignore(odbc_query(Connection, 'CREATE TABLE aisle_item(user_id VARCHAR, item_id VARCHAR, store_id VARCHAR, aisle_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, FOREIGN KEY(user_id, item_id) REFERENCES item(user_id, item_id), FOREIGN KEY(user_id, store_id) REFERENCES store(user_id, store_id), UNIQUE(user_id, item_id, store_id))', _)),
         % FIXME: Hack
-        odbc_query(Connection, 'INSERT INTO STORE(user_id, store_id) VALUES (\'matt\', \'Home\')', _).
+        odbc_query(Connection, 'INSERT INTO STORE(user_id, store_id, last_updated) VALUES (\'matt\', \'Home\', -1)', _).
 
 upgrade_schema_from(Connection, 1):-
         ignore(odbc_query(Connection, 'CREATE TABLE user(user_id VARCHAR, password VARCHAR)', _)),
@@ -105,7 +106,6 @@ store_exists(UserId, StoreId, Timestamp, DidUpdate):-
         state_change('INSERT INTO store(user_id, store_id, deleted, last_updated) VALUES (?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?', [UserId, StoreId, Timestamp, Timestamp, Timestamp, StoreId, UserId], DidUpdate).
 
 store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, DidUpdate):-
-        store_exists(UserId, StoreId, Timestamp, _),
         state_change('INSERT INTO store(user_id, store_id, latitude, longitude, deleted, last_updated) VALUES (?, ?, ?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET latitude = ?, longitude = ?, deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?',
                      [UserId, StoreId, Latitude, Longitude, Timestamp, Latitude, Longitude, Timestamp, Timestamp, StoreId, UserId],
                      DidUpdate).
@@ -129,7 +129,6 @@ item_located_in_aisle(UserId, ItemId, StoreId, AisleId, Timestamp, DidUpdate):-
                      DidUpdate).
 
 item_removed_from_aisle(UserId, ItemId, StoreId, Timestamp, DidUpdate):-
-        store_exists(UserId, StoreId, Timestamp, _),
         item_exists(UserId, ItemId, Timestamp, _),
         state_change('UPDATE aisle_item SET deleted = 1, last_updated = ? WHERE item_id = ? AND store_id = ? AND last_updated < ? AND user_id = ?',
                      [Timestamp, ItemId, StoreId, Timestamp, UserId],
@@ -138,8 +137,18 @@ item_removed_from_aisle(UserId, ItemId, StoreId, Timestamp, DidUpdate):-
 sync_message(UserId, Timestamp, _{opcode:item_exists, item_id:ItemId}, MessageTimestamp):-
         select('SELECT item_id, last_updated FROM item WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp]).
 
-sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:Latitude, longitude:Longitude}, MessageTimestamp):-
-        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]).
+sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:LatitudeF, longitude:LongitudeF}, MessageTimestamp):-
+        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]),
+        ( Latitude == {null} ->
+            LatitudeF = {null}
+        ; otherwise->
+            atom_number(Latitude, LatitudeF)
+        ),
+        ( Longitude == {null} ->
+            LongitudeF = {null}
+        ; otherwise->
+            atom_number(Longitude, LatitudeF)
+        ).
 
 sync_message(UserId, Timestamp, _{opcode:Opcode, item_id:ItemId}, MessageTimestamp):-
         select('SELECT item_id, last_updated, deleted FROM list_entry WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp, Deleted]),
@@ -163,10 +172,42 @@ login(UserId, Password):-
         Password == RequiredPassword.
 
 
+import_from_old_database(FromFile):-
+        prepare_database,
+        format(atom(DriverString), 'DRIVER={Sqlite3};Database=~w;FKSupport=True;Read Only=True', [FromFile]),
+        setup_call_cleanup(odbc_connect(-,
+                                        SourceConnection,
+                                        [driver_string(DriverString),
+                                         silent(false),
+                                         null({null}),
+                                         auto_commit(true)]),
+                           import_from_connection(SourceConnection),
+                           odbc_disconnect(SourceConnection)).
 
-pop:-
-        get_connection(Connection),
-        odbc_prepare(Connection, 'INSERT INTO list_entry(last_updated) VALUES(?)', [bigint], Statement),
-        odbc_execute(Statement, [1554394021738], _),
-        odbc_query(Connection, 'SELECT last_updated FROM list_entry', Row),
-        writeln(Row).
+
+import_from_connection(SourceConnection):-
+        forall(odbc_query(SourceConnection, 'SELECT key, name FROM item', row(UserId, ItemId)),
+               item_exists(UserId, ItemId, 1, _)),
+
+        forall((odbc_query(SourceConnection, 'SELECT key, name, latitude, longitude FROM store', row(UserId, StoreId, Latitude, Longitude)),
+                map_store(StoreId, MappedStoreId)),
+               store_located_at(UserId, MappedStoreId, Latitude, Longitude, 1, _)),
+
+        forall((odbc_query(SourceConnection, 'SELECT key, item, store, location FROM known_item_location', row(UserId, ItemId, StoreId, AisleId)),
+                map_store(StoreId, MappedStoreId)),
+               item_located_in_aisle(UserId, ItemId, MappedStoreId, AisleId, 1, _)),
+
+        forall(odbc_query(SourceConnection, 'SELECT key, name FROM list_item', row(UserId, ItemId)),
+               item_added_to_list(UserId, ItemId, 1, _)).
+
+
+map_store(tesco, 'Tesco Cannonmills'):- !.
+map_store(onion, _):- !, fail.
+map_store(qfc, 'QFC Capitol Hill'):- !.
+map_store(home, 'Home'):- !.
+map_store('hing sing', 'Hing Sing'):- !.
+map_store('tesco Leith', 'Tesco Leith'):- !.
+map_store('tesco dundee', 'Tesco Riverside'):- !.
+map_store('morrisons St. Andrews', 'Morrisons St. Andrews'):- !.
+map_store('Matthew foods Dundee', 'Matthews Foods Dundee'):- !.
+map_store(X, X).
