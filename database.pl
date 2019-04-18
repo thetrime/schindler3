@@ -105,11 +105,13 @@ store_exists(UserId, StoreId, Timestamp, DidUpdate):-
         state_change('INSERT INTO store(user_id, store_id, deleted, last_updated) VALUES (?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?', [UserId, StoreId, Timestamp, Timestamp, Timestamp, StoreId, UserId], DidUpdate).
 
 store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, DidUpdate):-
+        store_exists(UserId, StoreId, Timestamp, _),
         state_change('INSERT INTO store(user_id, store_id, latitude, longitude, deleted, last_updated) VALUES (?, ?, ?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET latitude = ?, longitude = ?, deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?',
                      [UserId, StoreId, Latitude, Longitude, Timestamp, Latitude, Longitude, Timestamp, Timestamp, StoreId, UserId],
                      DidUpdate).
 
 item_added_to_list(UserId, ItemId, Timestamp, DidUpdate):-
+        ??item_exists(UserId, ItemId, Timestamp, _),
         state_change('INSERT INTO list_entry(user_id, item_id, deleted, last_updated) VALUES (?, ?, 0, ?) ON CONFLICT(user_id, item_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND item_id = ? AND user_id = ?',
                      [UserId, ItemId, Timestamp, Timestamp, Timestamp, ItemId, UserId],
                      DidUpdate).
@@ -120,11 +122,15 @@ item_deleted_from_list(UserId, ItemId, Timestamp, DidUpdate):-
                      DidUpdate).
 
 item_located_in_aisle(UserId, ItemId, StoreId, AisleId, Timestamp, DidUpdate):-
+        item_exists(UserId, ItemId, Timestamp, _),
+        store_exists(UserId, StoreId, Timestamp, _),
         state_change('INSERT INTO aisle_item(user_id, item_id, store_id, aisle_id, deleted, last_updated) VALUES (?, ?, ?, ?, 0, ?) ON CONFLICT(user_id, item_id, store_id) DO UPDATE SET aisle_id = ?, deleted = 0, last_updated = ? WHERE last_updated < ? AND item_id = ? AND store_id = ? AND user_id = ?',
                      [UserId, ItemId, StoreId, AisleId, Timestamp, AisleId, Timestamp, Timestamp, ItemId, StoreId, UserId],
                      DidUpdate).
 
 item_removed_from_aisle(UserId, ItemId, StoreId, Timestamp, DidUpdate):-
+        store_exists(UserId, StoreId, Timestamp, _),
+        item_exists(UserId, ItemId, Timestamp, _),
         state_change('UPDATE aisle_item SET deleted = 1, last_updated = ? WHERE item_id = ? AND store_id = ? AND last_updated < ? AND user_id = ?',
                      [Timestamp, ItemId, StoreId, Timestamp, UserId],
                      DidUpdate).
