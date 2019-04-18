@@ -58,7 +58,7 @@ upgrade_schema_from(Connection, 0):-
         ignore(odbc_query(Connection, 'CREATE TABLE store(user_id VARCHAR, store_id VARCHAR, latitude VARCHAR, longitude VARCHAR, deleted INTEGER, last_updated BIGINTEGER, PRIMARY KEY(user_id, store_id))', _)),
         ignore(odbc_query(Connection, 'CREATE TABLE aisle_item(user_id VARCHAR, item_id VARCHAR, store_id VARCHAR, aisle_id VARCHAR, deleted INTEGER, last_updated BIGINTEGER, FOREIGN KEY(user_id, item_id) REFERENCES item(user_id, item_id), FOREIGN KEY(user_id, store_id) REFERENCES store(user_id, store_id), UNIQUE(user_id, item_id, store_id))', _)),
         % FIXME: Hack
-        ??odbc_query(Connection, 'INSERT INTO STORE(user_id, store_id) VALUES (\'matt\', \'Home\')', _).
+        odbc_query(Connection, 'INSERT INTO STORE(user_id, store_id) VALUES (\'matt\', \'Home\')', _).
 
 upgrade_schema_from(Connection, 1):-
         ignore(odbc_query(Connection, 'CREATE TABLE user(user_id VARCHAR, password VARCHAR)', _)),
@@ -111,7 +111,7 @@ store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, DidUpdate):-
                      DidUpdate).
 
 item_added_to_list(UserId, ItemId, Timestamp, DidUpdate):-
-        ??item_exists(UserId, ItemId, Timestamp, _),
+        item_exists(UserId, ItemId, Timestamp, _),
         state_change('INSERT INTO list_entry(user_id, item_id, deleted, last_updated) VALUES (?, ?, 0, ?) ON CONFLICT(user_id, item_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND item_id = ? AND user_id = ?',
                      [UserId, ItemId, Timestamp, Timestamp, Timestamp, ItemId, UserId],
                      DidUpdate).
