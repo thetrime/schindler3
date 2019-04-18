@@ -156,6 +156,14 @@ nuke(UserId):-
         forall(listener(UserId, SomeClientId),
                thread_send_message(SomeClientId, send(Atom))).
 
+message_chunk(Messages, Chunk):-
+        length(List, 20),
+        ( append(List, Remainder, Messages)->
+            ( Chunk = List ; message_chunk(Remainder, Chunk))
+        ; otherwise->
+            Chunk = Messages
+        ).
+
 
 handle_message(sync, ClientId, UserId, Data):-
         !,
@@ -165,9 +173,10 @@ handle_message(sync, ClientId, UserId, Data):-
                           max(MessageTimestamp)),
                         sync_message(UserId, Timestamp, Message, MessageTimestamp),
                         r(Messages, MaxTimestamp))->
-            with_output_to(atom(Atom),
-                           json_write(current_output, _{opcode:sync_response, messages:Messages, timestamp:MaxTimestamp}, [null({null}), width(0)])),
-            thread_send_message(ClientId, send(Atom))
+            forall(message_chunk(Messages, Chunk),
+                   ( with_output_to(atom(Atom),
+                                    json_write(current_output, _{opcode:sync_response, messages:Chunk, timestamp:MaxTimestamp}, [null({null}), width(0)])),
+                     thread_send_message(ClientId, send(Atom))))
         ; otherwise->
             % Nothing to do
             format(user_error, 'Nothing to sync for user ~w as client ~w', [UserId, ClientId])
