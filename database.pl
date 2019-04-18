@@ -138,17 +138,12 @@ sync_message(UserId, Timestamp, _{opcode:item_exists, item_id:ItemId}, MessageTi
         select('SELECT item_id, last_updated FROM item WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp]).
 
 sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:LatitudeF, longitude:LongitudeF}, MessageTimestamp):-
-        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]),
-        ( Latitude == {null} ->
-            LatitudeF = {null}
-        ; otherwise->
-            atom_number(Latitude, LatitudeF)
-        ),
-        ( Longitude == {null} ->
-            LongitudeF = {null}
-        ; otherwise->
-            atom_number(Longitude, LatitudeF)
-        ).
+        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ? AND latitude IS NOT NULL AND longitude IS NOT NULL', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]),
+        atom_number(Latitude, LatitudeF),
+        atom_number(Longitude, LongitudeF).
+
+sync_message(UserId, Timestamp, _{opcode:store_exists, store_id:StoreId}, MessageTimestamp):-
+        select('SELECT store_id, last_updated FROM store WHERE last_updated > ? AND user_id = ? AND latitude IS NULL AND longitude IS NULL', [Timestamp, UserId], [StoreId, MessageTimestamp]).
 
 sync_message(UserId, Timestamp, _{opcode:Opcode, item_id:ItemId}, MessageTimestamp):-
         select('SELECT item_id, last_updated, deleted FROM list_entry WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp, Deleted]),
