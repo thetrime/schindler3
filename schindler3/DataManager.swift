@@ -158,7 +158,7 @@ class DataManager {
         }
     }
 
-    func createItem(named item: String, _ unsolicited: Bool = true) {
+    func createItem(named item: String, _ unsolicited: Bool = false) {
         db.insert(to:"item", values:["item":item]);
         if (!items.contains(item)) {
             items.append(item);
@@ -233,7 +233,7 @@ class DataManager {
         }
     }
     
-    func setLocationOf(store name:String, to location:(Double, Double), _ unsolicited: Bool = true) {
+    func setLocationOf(store name:String, to location:(Double, Double), _ unsolicited: Bool = false) {
         if stores[name] == nil {
             createStoreNamed(name, atLocation:location);
         } else {
