@@ -105,9 +105,7 @@ item_exists(UserId, ItemId, Timestamp, DidUpdate):-
 store_exists(UserId, StoreId, Timestamp, DidUpdate):-
         state_change('INSERT INTO store(user_id, store_id, deleted, last_updated) VALUES (?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?', [UserId, StoreId, Timestamp, Timestamp, Timestamp, StoreId, UserId], DidUpdate).
 
-store_located_at(UserId, StoreId, LatitudeF, LongitudeF, Timestamp, DidUpdate):-
-        atom_number(Latitude, LatitudeF),
-        atom_number(Longitude, LongitudeF),
+store_located_at(UserId, StoreId, Latitude, Longitude, Timestamp, DidUpdate):-
         state_change('INSERT INTO store(user_id, store_id, latitude, longitude, deleted, last_updated) VALUES (?, ?, ?, ?, 0, ?) ON CONFLICT(user_id, store_id) DO UPDATE SET latitude = ?, longitude = ?, deleted = 0, last_updated = ? WHERE last_updated < ? AND store_id = ? AND user_id = ?',
                      [UserId, StoreId, Latitude, Longitude, Timestamp, Latitude, Longitude, Timestamp, Timestamp, StoreId, UserId],
                      DidUpdate).
@@ -139,10 +137,9 @@ item_removed_from_aisle(UserId, ItemId, StoreId, Timestamp, DidUpdate):-
 sync_message(UserId, Timestamp, _{opcode:item_exists, item_id:ItemId}, MessageTimestamp):-
         select('SELECT item_id, last_updated FROM item WHERE last_updated > ? AND user_id = ?', [Timestamp, UserId], [ItemId, MessageTimestamp]).
 
-sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:LatitudeF, longitude:LongitudeF}, MessageTimestamp):-
-        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ? AND latitude IS NOT NULL AND longitude IS NOT NULL', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]),
-        atom_number(Latitude, LatitudeF),
-        atom_number(Longitude, LongitudeF).
+sync_message(UserId, Timestamp, _{opcode:store_located_at, store_id:StoreId, latitude:Latitude, longitude:Longitude}, MessageTimestamp):-
+        select('SELECT store_id, latitude, longitude, last_updated FROM store WHERE last_updated > ? AND user_id = ? AND latitude IS NOT NULL AND longitude IS NOT NULL', [Timestamp, UserId], [StoreId, Latitude, Longitude, MessageTimestamp]).
+
 
 sync_message(UserId, Timestamp, _{opcode:store_exists, store_id:StoreId}, MessageTimestamp):-
         select('SELECT store_id, last_updated FROM store WHERE last_updated > ? AND user_id = ? AND latitude IS NULL AND longitude IS NULL', [Timestamp, UserId], [StoreId, MessageTimestamp]).
