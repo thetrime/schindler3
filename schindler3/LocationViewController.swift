@@ -12,6 +12,7 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
 
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var skipButton: UIBarButtonItem!
     var items: [String] = [];
     var filteredItems: [String] = [];
     var stores: [String] = ["Home"]
@@ -25,6 +26,8 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
         updateTable(after:) {
             filter = "";
         }
+        skipButton.target = self;
+        skipButton.action = #selector(LocationViewController.skipButtonPressed(button:));
     }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -115,6 +118,11 @@ class LocationViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
 
+    @objc func skipButtonPressed(button: UIButton) {
+        // Just the same, only do not call the callback
+        dismiss(animated: true, completion: nil);
+    }
+    
     /*
     // MARK: - Navigation
 

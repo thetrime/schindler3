@@ -379,9 +379,12 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="l96-nb-uvZ"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Item Location" id="9Kn-1K-F7I"/>
+                    <navigationItem key="navigationItem" title="Item Location" id="9Kn-1K-F7I">
+                        <barButtonItem key="rightBarButtonItem" title="Skip" id="AlF-gP-3Hp"/>
+                    </navigationItem>
                     <connections>
                         <outlet property="searchBar" destination="P26-oj-Rht" id="yCv-Tg-CHB"/>
+                        <outlet property="skipButton" destination="AlF-gP-3Hp" id="xDi-X6-ctS"/>
                         <outlet property="tableView" destination="ghB-Se-GLa" id="BGJ-3K-rM8"/>
                     </connections>
                 </viewController>
