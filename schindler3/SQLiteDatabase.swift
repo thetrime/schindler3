@@ -32,6 +32,12 @@ class SQLiteDatabase {
         exit(0)
     }
     
+    func softNuke() {
+        for row in select(from:"sqlite_master", values:["name"], where:["type":"table"]) {
+            delete(from:row["name"] as! String)
+        }
+    }
+    
     private func printLastError(_ context: String) {
         let errmsg = String(cString: sqlite3_errmsg(db)!)
         print("error in \(context): \(errmsg)")
