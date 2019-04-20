@@ -140,7 +140,7 @@ class DataManager {
         }
         stores[name] = location;
         if (!unsolicited) {
-            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": location.0, "longitude": location.1, "timestamp":getCurrentMillis()])
+            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": String(location.0), "longitude": String(location.1), "timestamp":getCurrentMillis()])
         }
     }
     
@@ -235,7 +235,7 @@ class DataManager {
     
     func setLocationOf(store name:String, to location:(Double, Double), _ unsolicited: Bool = false) {
         if stores[name] == nil {
-            createStoreNamed(name, atLocation:location);
+            createStoreNamed(name, atLocation:location, unsolicited);
         } else {
             print("Moving \(name) to \(location)")
             db.update("store",
@@ -245,7 +245,7 @@ class DataManager {
             stores[name] = location;
         }
         if (!unsolicited) {
-            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": location.0, "longitude": location.1, "timestamp":getCurrentMillis()])
+            net.queueMessage(["opcode":"store_located_at", "store_id": name, "latitude": String(location.0), "longitude": String(location.1), "timestamp":getCurrentMillis()])
         }
 
     }
@@ -256,6 +256,11 @@ class DataManager {
                 self.handleUnsolicitedMessageOnMainThread(withOpcode: opcode, data:data)
             }
         }
+    }
+    
+    func resyncFromScratch() {
+        db.softNuke()
+        net.queueMessage(["opcode":"sync", "timestamp":syncPoint()])
     }
     
     private func handleUnsolicitedMessageOnMainThread(withOpcode opcode: String, data: [String:Any]) {
@@ -274,7 +279,7 @@ class DataManager {
                 createStoreNamed(store_id, atLocation: (0,0), true)
             case "store_located_at":
                 let store_id = data["store_id"] as! String
-                let (latitude, longitude) = (data["latitude"] as! Double, data["longitude"] as! Double)
+                let (latitude, longitude) = (Double(data["latitude"] as! String)!, Double(data["longitude"] as! String)!)
                 setLocationOf(store: store_id, to: (latitude, longitude), true)
                 // This is actually not implemented. You cannot have an aisle in a store with nothing in it
                 // case "aisle_exists_in_store":
