@@ -266,7 +266,18 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
 
     @objc func syncButtonPressed(button: UIButton) {
-        // FIXME: Implement manual sync
+        if dataManager.missedMessages().count > 0 {
+            let alertController = UIAlertController(title: "Cannot Sync",
+                                                    message: "Pending messages unsent. Check your internet connection",
+                                                    preferredStyle: .alert)
+            let defaultAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+            alertController.addAction(defaultAction)
+            self.present(alertController, animated: true, completion: nil)
+        } else {
+            updateTable(after:) {
+                dataManager.resyncFromScratch()
+            }
+        }
     }
 
     
@@ -318,18 +329,16 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 let locatedItem = $0;
                 let location = $1;
                 self.updateTable(after:) {
-                    self.dataManager.setLocationOf(item: locatedItem, atStore: self.dataManager.currentStore.name, toLocation: location)
-                    //self.dataManager.currentStore?.setItemLocation(locatedItem, to: location);
-                    
+                    self.dataManager.setLocationOf(item: locatedItem, atStore: self.dataManager.currentStore.name, toLocation: location)                
                 }})
         } else if (segue.identifier == "DetermineStore") {
             locationViewController.determineLocationOf("", amongst:dataManager.getStoreList().sorted(), withTitle: "Where are you?", then: {
                 let location = $1;
-                self.dataManager.setLocationOf(store: location, to:self.currentLocation);                
+                self.dataManager.setLocationOf(store: location, to:self.currentLocation);
                 self.updateTable(after:) {
                     self.dataManager.determineStore(near:self.currentLocation);
-                }            
-            });
+                }
+            })
         }
     }
 }
