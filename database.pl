@@ -117,7 +117,7 @@ item_added_to_list(UserId, ItemId, Timestamp, DidUpdate):-
                      DidUpdate).
 
 item_deleted_from_list(UserId, ItemId, Timestamp, DidUpdate):-
-        state_change('UPDATE list_entry SET deleted = 0, last_updated = ? WHERE item_id = ? AND last_updated < ? AND user_id = ?',
+        state_change('UPDATE list_entry SET deleted = 1, last_updated = ? WHERE item_id = ? AND last_updated < ? AND user_id = ?',
                      [Timestamp, ItemId, Timestamp, UserId],
                      DidUpdate).
 
