@@ -11,8 +11,12 @@ DEVICES=00008020-001915C43AE1002E
 
 deploy:
 	xcodebuild -destination generic/platform=iOS build -allowProvisioningUpdates -workspace 'Schindler3.xcworkspace' -scheme "schindler3"
-	@for i in ${DEVICES} ; do echo "Deploying to $$i" && ios-deploy -v -n -i $$i -b build/Release-iphoneos/schindler3.app; done
+	@for i in ${DEVICES} ; do echo "Deploying to $$i" && ios-deploy -v -n -i $$i -b $(shell xcodebuild -workspace 'Schindler3.xcworkspace' -scheme "schindler3" -showBuildSettings | grep BUILD_ROOT | sed 's/[ ]*BUILD_ROOT = //')/Debug-iphoneos/schindler3.app; done
 #	ios-deploy -v -n -i 00008020-001915C43AE1002E -b build/Release-iphoneos/schindler3.app
 
 no-sign:
-	xcodebuild clean build -destination generic/platform=iOS CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+	xcodebuild clean build -destination generic/platform=iOS CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -workspace 'Schindler3.xcworkspace' -scheme "schindler3"
+
+
+clean:
+	xcodebuild -destination generic/platform=iOS build -allowProvisioningUpdates -workspace 'Schindler3.xcworkspace' -scheme "schindler3" -archivePath "build/archive" clean
