@@ -158,13 +158,14 @@ nuke(UserId):-
         forall(listener(UserId, SomeClientId),
                thread_send_message(SomeClientId, send(Atom))).
 
-message_chunk(Messages, Chunk):-
+message_chunk(Messages, Chunk, N, Id):-
         length(List, 20),
         ( append(List, Remainder, Messages)->
-            ( Chunk = List
-            ; message_chunk(Remainder, Chunk))
+            ( ( Chunk = List, Id = N)
+            ; ( NN is N+1, message_chunk(Remainder, Chunk, NN, Id)))
         ; otherwise->
-            Chunk = Messages
+            Chunk = Messages,
+            Id = N
         ).
 
 send_client_message(ClientId, MessageTerm):-
@@ -181,8 +182,8 @@ handle_message(sync, ClientId, UserId, Data):-
                         sync_message(UserId, Timestamp, Message, MessageTimestamp),
                         r(Messages, MaxTimestamp))->
             send_client_message(ClientId, _{opcode:sync_start}),
-            forall(message_chunk(Messages, Chunk),
-                   send_client_message(ClientId, _{opcode:sync_message, messages:Chunk})),
+            forall(message_chunk(Messages, 0, Chunk, Id),
+                   send_client_message(ClientId, _{opcode:sync_message, messages:Chunk, chunk:Id})),
             send_client_message(ClientId, _{opcode:sync_complete, timestamp:MaxTimestamp})
         ; otherwise->
             % Nothing to do
