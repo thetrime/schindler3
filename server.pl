@@ -158,15 +158,18 @@ nuke(UserId):-
         forall(listener(UserId, SomeClientId),
                thread_send_message(SomeClientId, send(Atom))).
 
-message_chunk(Messages, Timestamp, MaxTimestamp, Chunk, ChunkTimestamp):-
+message_chunk(Messages, Chunk):-
         length(List, 20),
         ( append(List, Remainder, Messages)->
-            ( ( Chunk = List, ChunkTimestamp = Timestamp)
-            ; message_chunk(Remainder, Timestamp, MaxTimestamp, Chunk, ChunkTimestamp))
+            ( Chunk = List
+            ; message_chunk(Remainder, Chunk))
         ; otherwise->
-            Chunk = Messages,
-            ChunkTimestamp = MaxTimestamp
+            Chunk = Messages
         ).
+
+send_client_message(ClientId, MessageTerm):-
+        with_output_to(atom(Atom), json_write(current_output, MessageTerm, [null({null}), width(0)])),
+        thread_send_message(ClientId, send(Atom)).
 
 
 handle_message(sync, ClientId, UserId, Data):-
@@ -177,10 +180,10 @@ handle_message(sync, ClientId, UserId, Data):-
                           max(MessageTimestamp)),
                         sync_message(UserId, Timestamp, Message, MessageTimestamp),
                         r(Messages, MaxTimestamp))->
-            forall(message_chunk(Messages, Timestamp, MaxTimestamp, Chunk, ChunkTimestamp),
-                   ( with_output_to(atom(Atom),
-                                    json_write(current_output, _{opcode:sync_response, messages:Chunk, timestamp:ChunkTimestamp}, [null({null}), width(0)])),
-                     thread_send_message(ClientId, send(Atom))))
+            send_client_message(ClientId, _{opcode:sync_start}),
+            forall(message_chunk(Messages, Chunk),
+                   send_client_message(ClientId, _{opcode:sync_message, messages:Chunk})),
+            send_client_message(ClientId, _{opcode:sync_complete, timestamp:MaxTimestamp})
         ; otherwise->
             % Nothing to do
             format(user_error, 'Nothing to sync for user ~w as client ~w', [UserId, ClientId])
