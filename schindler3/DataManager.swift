@@ -42,6 +42,18 @@ class DataManager {
         }
     }
     
+    func getAislesOfCurrentStore() -> [String] {
+        var aisles : [String] = [];
+        for row in db.select(from:"store_contents", values:["location"], where:["store_name": currentStore.name], orderBy: ["location": "asc"]) {
+            if let i = row["location"] as? String {
+                if !aisles.contains(i) {
+                    aisles.append(i);
+                }
+            }
+        }
+        return aisles;
+    }
+    
     
     init() {
         prepareSchema();

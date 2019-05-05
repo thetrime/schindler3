@@ -20,6 +20,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var setLocationButton: UIBarButtonItem!
     @IBOutlet weak var syncButton: UIBarButtonItem!
+    @IBOutlet weak var tescoButton: UIBarButtonItem!
     
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
@@ -85,6 +86,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         for (location, itemList) in newLocations {
             newLocations[location] = itemList.sorted(by: <);
         }
+        // FIXME: Sort this so that Unknown is always at the end, and that items are sorted alphanumerically
         let newSections = newLocations.keys.sorted();
 
         // Table update is hard to get your head around. The general idea is:
@@ -156,6 +158,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
         syncButton.target = self;
         syncButton.action = #selector(ListViewController.syncButtonPressed(button:));
+        tescoButton.target = self;
+        tescoButton.action = #selector(ListViewController.tescoButtonPressed(button:));
+
+        
     }
     
     override func didReceiveMemoryWarning() {
@@ -280,6 +286,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
 
+    @objc func tescoButtonPressed(button: UIButton) {
+        self.performSegue(withIdentifier:"ShopTesco", sender:nil);
+    }
+    
     
     // MARK: UISearchBarDelegate
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
@@ -325,7 +335,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 print("Unexpected sender")
                 return;
             }
-            locationViewController.determineLocationOf(item, amongst: sections.filter( { $0 != "Unknown" } ), withTitle: "Location of \(item)", then: {
+            locationViewController.determineLocationOf(item, amongst: dataManager.getAislesOfCurrentStore(), withTitle: "Location of \(item)", then: {
                 let locatedItem = $0;
                 let location = $1;
                 self.updateTable(after:) {
