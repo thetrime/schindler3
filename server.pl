@@ -9,9 +9,11 @@
 
 :- http_handler(root(ws), http_upgrade_to_websocket(ws, []), [spawn([])]).
 :- http_handler(root('.well-known'), acme, [prefix, priority(1)]).
+:-initialization(start_server, program).
 
 :-ensure_loaded(testing).
 :-ensure_loaded(database).
+:-ensure_loaded(tesco).
 
 :-dynamic(listener/2).
 
@@ -92,7 +94,7 @@ dispatch(WebSocket):-
         ).
 
 
-run:-
+start_server:-
         prepare_database,
         prolog_server(9997, []),
         http_server(http_dispatch, [port(9007)]),
