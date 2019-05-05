@@ -1,0 +1,47 @@
+
+body
+{
+    text-align: center;
+    font-family: Arial;
+    font-size: 16pt;
+}
+
+.other_items
+{
+    flex-flow: row wrap;
+    display: flex;
+    justify-content: center;
+}
+
+.favourite_items
+{
+    flex-flow: row wrap;
+    display: flex;
+    justify-content: center;
+}
+
+.product
+{
+    width: 225px;
+    text-align: center;
+    margin: 10px;
+}
+
+.offer
+{
+    color: red;
+}
+
+
+input
+{
+    font-size: 16pt;
+    width: 2em;
+}
+
+input.query
+{
+    font-size: 16pt;
+    width: 95%;
+}
+
