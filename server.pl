@@ -182,7 +182,7 @@ handle_message(sync, ClientId, UserId, Data):-
                         sync_message(UserId, Timestamp, Message, MessageTimestamp),
                         r(Messages, MaxTimestamp))->
             send_client_message(ClientId, _{opcode:sync_start}),
-            forall(message_chunk(Messages, 0, Chunk, Id),
+            forall(message_chunk(Messages, Chunk, 0, Id),
                    send_client_message(ClientId, _{opcode:sync_message, messages:Chunk, chunk:Id})),
             send_client_message(ClientId, _{opcode:sync_complete, timestamp:MaxTimestamp})
         ; otherwise->
