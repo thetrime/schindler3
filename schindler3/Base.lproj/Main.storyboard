@@ -58,6 +58,55 @@
             </objects>
             <point key="canvasLocation" x="-2738.4000000000001" y="884.70764617691157"/>
         </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="rqR-WC-lRA">
+            <objects>
+                <navigationController id="UG8-1i-VHg" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="AwW-un-ANV">
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="0Hs-Hu-Qfs" kind="relationship" relationship="rootViewController" id="HVg-gJ-RHb"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="pVq-sx-jMp" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-954" y="-663"/>
+        </scene>
+        <!--Tesco-->
+        <scene sceneID="Vyw-qJ-pdA">
+            <objects>
+                <viewController id="0Hs-Hu-Qfs" customClass="TescoViewController" customModule="schindler3" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="OS8-uW-DEa">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <wkWebView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EcR-qi-8rq">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" red="0.36078431370000003" green="0.38823529410000002" blue="0.4039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <wkWebViewConfiguration key="configuration">
+                                    <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
+                                    <wkPreferences key="preferences"/>
+                                </wkWebViewConfiguration>
+                            </wkWebView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <viewLayoutGuide key="safeArea" id="F9z-qo-oKU"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="Tesco" id="vct-Yl-NHW">
+                        <barButtonItem key="rightBarButtonItem" title="Cancel" id="1ZW-Rw-ZkM"/>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="cancelButton" destination="1ZW-Rw-ZkM" id="Pb7-Uq-Xud"/>
+                        <outlet property="webView" destination="EcR-qi-8rq" id="qCQ-vw-i1d"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dWJ-8B-DTE" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="16.800000000000001" y="-663.41829085457277"/>
+        </scene>
         <!--List View Controller-->
         <scene sceneID="iNl-WU-bYl">
             <objects>
@@ -137,7 +186,10 @@
                         <viewLayoutGuide key="safeArea" id="bnF-C2-MTm"/>
                     </view>
                     <navigationItem key="navigationItem" id="nx7-5b-HCz">
-                        <barButtonItem key="leftBarButtonItem" title="Sync" id="ui9-9E-LO2"/>
+                        <leftBarButtonItems>
+                            <barButtonItem title="Sync" id="ui9-9E-LO2"/>
+                            <barButtonItem title="Tesco" id="GEl-ic-xIN"/>
+                        </leftBarButtonItems>
                         <barButtonItem key="rightBarButtonItem" title="Set" id="2xu-jR-Hps">
                             <connections>
                                 <action selector="setLocationButton:" destination="R36-26-kGu" id="bxs-S9-GqE"/>
@@ -149,15 +201,17 @@
                         <outlet property="setLocationButton" destination="2xu-jR-Hps" id="Kfw-bb-xtS"/>
                         <outlet property="syncButton" destination="ui9-9E-LO2" id="D2o-cK-K21"/>
                         <outlet property="tableView" destination="SVV-j5-1un" id="j0n-xT-ITD"/>
+                        <outlet property="tescoButton" destination="GEl-ic-xIN" id="QZo-qf-H0J"/>
                         <segue destination="i4U-Ko-XMi" kind="show" identifier="LocateItem" id="gjn-kk-wf5"/>
                         <segue destination="z01-Xe-SXA" kind="presentation" identifier="DetermineStore" id="bsF-Xm-bO3"/>
                         <segue destination="GoY-sB-n0o" kind="presentation" identifier="Login" id="lm2-zy-BoZ"/>
+                        <segue destination="UG8-1i-VHg" kind="presentation" identifier="ShopTesco" id="E6Z-pp-btd"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="tDU-eI-lto" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <exit id="R36-26-kGu" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="-2138" y="118"/>
+            <point key="canvasLocation" x="-2116" y="116"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="s6w-SK-vU2">
@@ -273,9 +327,12 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="QYT-Zz-wH0"/>
                     </view>
-                    <navigationItem key="navigationItem" title="Set Location" id="OaU-mU-dnO"/>
+                    <navigationItem key="navigationItem" title="Set Location" id="OaU-mU-dnO">
+                        <barButtonItem key="rightBarButtonItem" title="Skip" id="mxW-hp-Kxq"/>
+                    </navigationItem>
                     <connections>
                         <outlet property="searchBar" destination="5YZ-TD-q0S" id="XSD-A3-vk5"/>
+                        <outlet property="skipButton" destination="mxW-hp-Kxq" id="6Qe-Pu-AWO"/>
                         <outlet property="tableView" destination="Uwr-jy-f4Y" id="Jd4-ab-ESn"/>
                     </connections>
                 </viewController>
