@@ -145,7 +145,7 @@ generate_next_page(Heading):-
             generate_selection_page(Heading, ItemId, FavouriteIds, Products)
         ; otherwise->
             % Finished!
-            format(current_output, 'Content-type: text/html~n~n<html><head><script>window.onload = function() {window.webkit.messageHandlers.callbackHandler.postMessage(\"Done\");}</script></head><body></body></html>', []).
+            format(current_output, 'Content-type: text/html~n~n<html><head><script>window.onload = function() {window.webkit.messageHandlers.callbackHandler.postMessage(\"Done\");}</script></head><body></body></html>', [])
         ).
 
 
