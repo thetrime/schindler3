@@ -1,6 +1,7 @@
 :-module(database,
          [login/2,
           import_from_old_database/1,
+          current_list_item/2,
           item_exists/4,
           store_exists/4,
           store_located_at/6,
@@ -9,6 +10,11 @@
           item_located_in_aisle/6,
           item_removed_from_aisle/5,
           sync_message/4,
+          tesco_favourite/3,
+          set_tesco_favourite/3,
+          tesco_query_string/3,
+          set_tesco_query_string/3,
+          delete_tesco_favourite/3,
           prepare_database/0,
           get_connection/1]).
 
@@ -64,6 +70,11 @@ upgrade_schema_from(Connection, 0):-
 upgrade_schema_from(Connection, 1):-
         ignore(odbc_query(Connection, 'CREATE TABLE user(user_id VARCHAR, password VARCHAR)', _)),
         odbc_query(Connection, 'INSERT INTO user(user_id, password) VALUES (\'matt\', \'notverysecretatall\')', _).
+
+upgrade_schema_from(Connection, 2):-
+        ignore(odbc_query(Connection, 'CREATE TABLE tesco_query_string(user_id VARCHAR, item_id VARCHAR, query_string VARCHAR, PRIMARY KEY(user_id, item_id))', _)),
+        ignore(odbc_query(Connection, 'CREATE TABLE tesco_favourite(user_id VARCHAR, item_id VARCHAR, product_id VARCHAR, PRIMARY KEY(user_id, item_id, product_id))', _)).
+
 
 build_types([], []):- !.
 build_types([Value|Values], [Type|Types]):-
@@ -165,6 +176,31 @@ login(UserId, Password):-
         select('SELECT password FROM user WHERE user_id = ?', [UserId], [RequiredPassword]),
         Password == RequiredPassword.
 
+set_tesco_favourite(UserId, ItemId, ProductId):-
+        % We dont need timestamps because this always only happens on the server
+        state_change('INSERT INTO tesco_favourite(user_id, item_id, product_id) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id, product_id) DO NOTHING',
+                     [UserId, ItemId, ProductId],
+                     _).
+
+delete_tesco_favourite(UserId, ItemId, ProductId):-
+        state_change('DELETE FROM tesco_favourite WHERE user_id = ? AND item_id = ? AND product_id = ?',
+                     [UserId, ItemId, ProductId],
+                     _).
+
+
+tesco_favourite(UserId, ItemId, ProductId):-
+        select('SELECT product_id FROM tesco_favourite WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [ProductId]).
+
+set_tesco_query_string(UserId, ItemId, QueryString):-
+        state_change('INSERT INTO tesco_query_string(user_id, item_id, query_string) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id) DO UPDATE SET query_string = ? WHERE user_id = ? AND item_id = ?',
+                     [UserId, ItemId, QueryString, QueryString, UserId, ItemId],
+                     _).
+
+tesco_query_string(UserId, ItemId, QueryString):-
+        select('SELECT query_string FROM tesco_query_string WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [QueryString]).
+
+current_list_item(UserId, ItemId):-
+        select('SELECT item_id FROM list_entry WHERE user_id = ? AND deleted = 0', [UserId], [ItemId]).
 
 import_from_old_database(FromFile):-
         prepare_database,
@@ -188,6 +224,7 @@ import_from_connection(SourceConnection):-
                store_located_at(UserId, MappedStoreId, Latitude, Longitude, 1, _)),
 
         forall((odbc_query(SourceConnection, 'SELECT key, item, store, location FROM known_item_location', row(UserId, ItemId, StoreId, AisleId)),
+                AisleId \== '$beyond',
                 map_store(StoreId, MappedStoreId)),
                item_located_in_aisle(UserId, ItemId, MappedStoreId, AisleId, 1, _)),
 
