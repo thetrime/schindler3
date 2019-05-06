@@ -159,7 +159,8 @@ tesco_products(QueryString, Products):-
 tesco_login(SessionId):-
         ( tesco_tokens(SessionId, State, CSRF) ->
             % Need to log in
-            tesco_credentials(Username, Password),
+            http_session_data(user_id(UserId)),
+            tesco_credentials(UserId, Username, Password),
             setup_call_cleanup(http_open('https://secure.tesco.com/account/en-GB/login', Stream, [cacert_file(system(root_certificates)),
                                                                                                     post(form([username=Username, password=Password, state=State, '_csrf'=CSRF])),
                                                                                                     client(SessionId)]),
