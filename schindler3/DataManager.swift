@@ -123,7 +123,6 @@ class DataManager {
         currentList = [];
         for row in db.select(from: "current_list", values:["item"]) {
             if let i = row["item"] as?  String {
-                print("Here: " + i)
                 currentList.append(i);
             }
         }

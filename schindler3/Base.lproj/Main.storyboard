@@ -186,10 +186,7 @@
                         <viewLayoutGuide key="safeArea" id="bnF-C2-MTm"/>
                     </view>
                     <navigationItem key="navigationItem" id="nx7-5b-HCz">
-                        <leftBarButtonItems>
-                            <barButtonItem title="Sync" id="ui9-9E-LO2"/>
-                            <barButtonItem title="Tesco" id="GEl-ic-xIN"/>
-                        </leftBarButtonItems>
+                        <barButtonItem key="leftBarButtonItem" title="Menu" id="ui9-9E-LO2"/>
                         <barButtonItem key="rightBarButtonItem" title="Set" id="2xu-jR-Hps">
                             <connections>
                                 <action selector="setLocationButton:" destination="R36-26-kGu" id="bxs-S9-GqE"/>
@@ -197,11 +194,10 @@
                         </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="menuButton" destination="ui9-9E-LO2" id="ccs-hc-V7b"/>
                         <outlet property="searchBar" destination="H5h-d9-045" id="4tg-Qi-7FO"/>
                         <outlet property="setLocationButton" destination="2xu-jR-Hps" id="Kfw-bb-xtS"/>
-                        <outlet property="syncButton" destination="ui9-9E-LO2" id="D2o-cK-K21"/>
                         <outlet property="tableView" destination="SVV-j5-1un" id="j0n-xT-ITD"/>
-                        <outlet property="tescoButton" destination="GEl-ic-xIN" id="QZo-qf-H0J"/>
                         <segue destination="i4U-Ko-XMi" kind="show" identifier="LocateItem" id="gjn-kk-wf5"/>
                         <segue destination="z01-Xe-SXA" kind="presentation" identifier="DetermineStore" id="bsF-Xm-bO3"/>
                         <segue destination="GoY-sB-n0o" kind="presentation" identifier="Login" id="lm2-zy-BoZ"/>

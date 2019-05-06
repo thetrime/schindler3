@@ -19,8 +19,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var setLocationButton: UIBarButtonItem!
-    @IBOutlet weak var syncButton: UIBarButtonItem!
-    @IBOutlet weak var tescoButton: UIBarButtonItem!
+    @IBOutlet weak var menuButton: UIBarButtonItem!
     
     private var locations: [String: [String]] = [:];
     private var sections: [String] = [];
@@ -156,10 +155,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         searchBar.delegate = self;
         setLocationButton.target = self;
         setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
-        syncButton.target = self;
-        syncButton.action = #selector(ListViewController.syncButtonPressed(button:));
-        tescoButton.target = self;
-        tescoButton.action = #selector(ListViewController.tescoButtonPressed(button:));
+        menuButton.target = self;
+        menuButton.action = #selector(ListViewController.menuButtonPressed(button:));
 
         
     }
@@ -271,23 +268,42 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         self.performSegue(withIdentifier: "DetermineStore", sender: nil);
     }
 
-    @objc func syncButtonPressed(button: UIButton) {
-        if dataManager.missedMessages().count > 0 {
-            let alertController = UIAlertController(title: "Cannot Sync",
-                                                    message: "Pending messages unsent. Check your internet connection",
-                                                    preferredStyle: .alert)
-            let defaultAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-            alertController.addAction(defaultAction)
-            self.present(alertController, animated: true, completion: nil)
-        } else {
-            updateTable(after:) {
-                dataManager.resyncFromScratch()
+    @objc func menuButtonPressed(button: UIButton) {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Force Sync", style: .default) { _ in
+            if self.dataManager.missedMessages().count > 0 {
+                let alertController = UIAlertController(title: "Cannot Sync",
+                                                        message: "Pending messages unsent. Check your internet connection",
+                                                        preferredStyle: .alert)
+                let defaultAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+                alertController.addAction(defaultAction)
+                self.present(alertController, animated: true, completion: nil)
+            } else {
+                self.updateTable(after:) {
+                    self.dataManager.resyncFromScratch()
+                }
             }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Shop Tesco", style: .default) { _ in
+            self.performSegue(withIdentifier:"ShopTesco", sender:nil);
+        })
+
+        alert.addAction(UIAlertAction(title: "Log Off", style: .default) { _ in
+            UserDefaults.standard.set(nil, forKey: "user_id")
+            UserDefaults.standard.set(nil, forKey: "password")
+            self.login()
+        })
+        
+        self.present(alert, animated: true) {
+            alert.view.superview?.isUserInteractionEnabled = true
+            alert.view.superview?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.alertControllerBackgroundTapped)))
         }
     }
 
-    @objc func tescoButtonPressed(button: UIButton) {
-        self.performSegue(withIdentifier:"ShopTesco", sender:nil);
+    @objc func alertControllerBackgroundTapped()
+    {
+        self.dismiss(animated: true, completion: nil)
     }
     
     

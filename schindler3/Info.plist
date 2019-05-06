@@ -44,6 +44,20 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIFileSharingEnabled</key>
-	<true/>
+        <true/>
+
+        <key>NSAppTransportSecurity</key>
+        <dict>
+          <key>NSExceptionDomains</key>
+          <dict>
+            <key>schindlerx.strangled.net</key>
+            <dict>
+              <key>NSExceptionRequiresForwardSecrecy</key>
+              <false/>
+              <key>NSExceptionAllowsInsecureHTTPLoads</key>
+              <true/>
+            </dict>
+          </dict>
+        </dict>
 </dict>
 </plist>
