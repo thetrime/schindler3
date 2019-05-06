@@ -32,6 +32,7 @@ ws(Websocket):-
         format(user_error, 'Login request for user ~w~n', [UserId]),
         ( login(UserId, Password)->
             format(user_error, 'Login successful for user ~w~n', [UserId]),
+            ws_send(Websocket, text('{"opcode":"login_ok"}'))
             setup_call_cleanup((thread_create(dispatch(Websocket), ClientId, [detached(true)]),
                                 assert(listener(UserId, ClientId))
                                ),
