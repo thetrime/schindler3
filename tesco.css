@@ -46,7 +46,7 @@ input.query
 }
 
 
-button {
+.fancybutton {
 	-moz-box-shadow: 0px 0px 5px 3px #8296cc;
 	-webkit-box-shadow: 0px 0px 5px 3px #8296cc;
 	box-shadow: 0px 0px 5px 3px #8296cc;
@@ -71,7 +71,7 @@ button {
 	text-decoration:none;
 	text-shadow:0px 1px 0px #283966;
 }
-button:hover {
+.fancybutton:hover {
 	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #476e9e), color-stop(1, #8dafeb));
 	background:-moz-linear-gradient(top, #476e9e 5%, #8dafeb 100%);
 	background:-webkit-linear-gradient(top, #476e9e 5%, #8dafeb 100%);
@@ -81,7 +81,23 @@ button:hover {
 	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#476e9e', endColorstr='#8dafeb',GradientType=0);
 	background-color:#476e9e;
 }
-button:active {
+
+.fancybutton:active {
 	position:relative;
 	top:1px;
+}
+
+.unfavourite {
+    position: absolute;
+    right: 0;
+    font-size: 16pt;
+
+}
+
+.product_image {
+    position: relative;
+}
+
+.product_image form {
+    display: inline
 }

@@ -14,6 +14,7 @@
 :-http_handler(root(tesco), tesco, []).
 :-http_handler(root('tesco.css'), http_reply_file('tesco.css', []), []).
 :-http_handler(root(add_item), add_item, []).
+:-http_handler(root(unfavourite), unfavourite, []).
 :-http_handler(root(skip_item), skip_item, []).
 :-http_handler(root(set_query), set_query, []).
 :- use_module(library(http/http_client)).
@@ -103,7 +104,8 @@ queue_item(UserId, ItemId):-
             assertz(need_item(UserId, ItemId)),
             thread_self(Self),
             http_session_id(SessionId),
-            thread_send_message(tesco_queue, refresh_cache(UserId, SessionId, ItemId, Self))
+            thread_send_message(tesco_queue, refresh_cache(UserId, SessionId, ItemId, Self)),
+            true
         ).
 
 skip_item(Request):-
@@ -113,6 +115,15 @@ skip_item(Request):-
         retract(need_item(UserId, ItemId)),
         generate_next_page('No problem. Item has been left in your list', use_cache).
 
+unfavourite(Request):-
+        http_read_data(Request, Data, []),
+        memberchk('id'=ProductId, Data),
+        memberchk('schindler_id'=ItemId, Data),
+        http_session_data(user_id(UserId)),
+        unfavourite_item(UserId, ItemId, ProductId),
+        NextHeading = 'Ok, that item has been removed',
+        generate_next_page(NextHeading, use_cache).
+
 add_item(Request):-
         http_read_data(Request, Data, []),
         memberchk('_csrf'=CSRF, Data),
@@ -120,41 +131,36 @@ add_item(Request):-
         memberchk('schindler_id'=ItemId, Data),
         memberchk('newValue'=NewValue, Data),
         http_session_data(user_id(UserId)),
-        ( memberchk('unfavourite'=_, Data)->
-            unfavourite_item(UserId, ItemId, ProductId),
-            NextHeading = 'Ok, that item has been removed'
+        retract(need_item(UserId, ItemId)),
+        http_session_id(SessionId),
+        format(atom(URL), 'https://www.tesco.com/groceries/en-GB/trolley/items/~w?_method=PUT', [ProductId]),
+        setup_call_cleanup(http_open(URL, Stream, [cacert_file(system(root_certificates)),
+                                                   status_code(StatusCode),
+                                                   %final_url(Final),
+                                                   post(form([id=ProductId,
+                                                              anchorId = '',
+                                                              returnUrl = '',
+                                                              backToUrl = '#',
+                                                              oldValue = '0',
+                                                              oldUnitChoice = 'pcs',
+                                                              catchWeight = '',
+                                                              newUnitChoice = 'pcs',
+                                                              newValue=NewValue,
+                                                              '_csrf'=CSRF])),
+                                                   request_header(origin='https://www.tesco.com'),
+                                                   client(SessionId)]),
+                           ( StatusCode == 200 ->
+                               true
+                           ; copy_stream_data(Stream, user_error)
+                           ),
+                             close(Stream)),
+        set_favourite(UserId, ItemId, ProductId),
+        ( StatusCode == 200 ->
+            remove_item_from_list(UserId, ItemId),
+            format(atom(NextHeading), 'Success! ~w removed from list', [ItemId])
         ; otherwise->
-            retract(need_item(UserId, ItemId)),
-            http_session_id(SessionId),
-            format(atom(URL), 'https://www.tesco.com/groceries/en-GB/trolley/items/~w?_method=PUT', [ProductId]),
-            setup_call_cleanup(http_open(URL, Stream, [cacert_file(system(root_certificates)),
-                                                       status_code(StatusCode),
-                                                       %final_url(Final),
-                                                       post(form([id=ProductId,
-                                                                  anchorId = '',
-                                                                  returnUrl = '',
-                                                                  backToUrl = '#',
-                                                                  oldValue = '0',
-                                                                  oldUnitChoice = 'pcs',
-                                                                  catchWeight = '',
-                                                                  newUnitChoice = 'pcs',
-                                                                  newValue=NewValue,
-                                                                  '_csrf'=CSRF])),
-                                                       request_header(origin='https://www.tesco.com'),
-                                                       client(SessionId)]),
-                               ( StatusCode == 200 ->
-                                   true
-                               ; copy_stream_data(Stream, user_error)
-                               ),
-                               close(Stream)),
-            set_favourite(UserId, ItemId, ProductId),
-            ( StatusCode == 200 ->
-                remove_item_from_list(UserId, ItemId),
-                format(atom(NextHeading), 'Success! ~w removed from list', [ItemId])
-            ; otherwise->
-                % Something went wrong
-                format(atom(NextHeading), 'Hmm. There was a problem. ~w has been left on your list', [ItemId])
-            )
+            % Something went wrong
+            format(atom(NextHeading), 'Hmm. There was a problem. ~w has been left on your list', [ItemId])
         ),
         generate_next_page(NextHeading, use_cache).
 
@@ -279,11 +285,11 @@ generate_selection_page(Banner, ItemId, FavouriteIds, Products):-
                                                        element(body, [], [element(h2, [], [Banner]),
                                                                           element(h3, [], ['You are trying to add ', ItemId, ' to your Tesco basket. Please pick from the following options:']),
                                                                           element(form, [action='/skip_item', method=post], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
-                                                                                                                             element(button, [], ['Skip adding ', ItemId, ' to this shop and leave it in Schindler'])]),
+                                                                                                                             element(button, [class=fancybutton], ['Skip adding ', ItemId, ' to this shop and leave it in Schindler'])]),
                                                                           FavouriteSection,
                                                                           element(form, [action='/set_query', method=post], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
                                                                                                                              element(input, [class=query, name=query], []),
-                                                                                                                             element(button, [], ['When looking for ', ItemId, ', search for this instead'])]),
+                                                                                                                             element(button, [class=fancybutton], ['When looking for ', ItemId, ', search for this instead'])]),
                                                                           element(hr, [], []),
                                                                           OtherSection])])], []).
 
@@ -306,7 +312,7 @@ element_in_products(ItemId, Products, CanUnfavourite, Element):-
         ; otherwise->
             OfferSpan = element(span, [class=offer], [' (', Offer, ')'])
         ),
-        Element = element(div, [class=product], [element(img, [src=Image], []),
+        Element = element(div, [class=product], [element(div, [class=product_image], [element(img, [src=Image], [])|Tail]),
                                                  ProductTitle,
                                                  element(div, [class=price], ['  £', Price]),
                                                  OfferSpan,
@@ -314,9 +320,11 @@ element_in_products(ItemId, Products, CanUnfavourite, Element):-
                                                                                                      element(input, [type=hidden, name='id', value=ProductId], []),
                                                                                                      element(input, [type=hidden, name='_csrf', value=CSRF], []),
                                                                                                      element(input, [type=hidden, name='schindler_id', value=ItemId], []),
-                                                                                                     element(button, [type=submit, name=add], ['Add'])|Tail])]),
+                                                                                                     element(button, [type=submit, name=add, class=fancybutton], ['Add'])])]),
         ( CanUnfavourite == true ->
-            Tail = [element(button, [type=submit, name=unfavourite], ['I don\'t like this product anymore'])]
+            Tail = [element(form, [action='/unfavourite', method='POST'], [element(input, [type=hidden, name='schindler_id', value=ItemId], []),
+                                                                           element(input, [type=hidden, name='id', value=ProductId], []),
+                                                                           element(button, [type=submit, name=unfavourite, class=unfavourite], ['x'])])]
         ; otherwise->
             Tail = []
         ).
