@@ -1,7 +1,10 @@
 :-module(database,
          [login/2,
           import_from_old_database/1,
+          cache_tesco_product/9,
+          cached_tesco_products/3,
           current_list_item/2,
+          delete_tesco_cache/2,
           item_exists/4,
           store_exists/4,
           store_located_at/6,
@@ -74,6 +77,10 @@ upgrade_schema_from(Connection, 1):-
 upgrade_schema_from(Connection, 2):-
         ignore(odbc_query(Connection, 'CREATE TABLE tesco_query_string(user_id VARCHAR, item_id VARCHAR, query_string VARCHAR, PRIMARY KEY(user_id, item_id))', _)),
         ignore(odbc_query(Connection, 'CREATE TABLE tesco_favourite(user_id VARCHAR, item_id VARCHAR, product_id VARCHAR, PRIMARY KEY(user_id, item_id, product_id))', _)).
+
+upgrade_schema_from(Connection, 3):-
+        ignore(odbc_query(Connection, 'CREATE TABLE tesco_cache(user_id VARCHAR, item_id VARCHAR, product_id VARCHAR, is_tesco_favourite VARCHAR, title VARCHAR, image VARCHAR, price VARCHAR, offer VARCHAR, csrf VARCHAR, last_updated BIGINTEGER)', _)).
+
 
 
 build_types([], []):- !.
@@ -176,28 +183,6 @@ login(UserId, Password):-
         select('SELECT password FROM user WHERE user_id = ?', [UserId], [RequiredPassword]),
         Password == RequiredPassword.
 
-set_tesco_favourite(UserId, ItemId, ProductId):-
-        % We dont need timestamps because this always only happens on the server
-        state_change('INSERT INTO tesco_favourite(user_id, item_id, product_id) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id, product_id) DO NOTHING',
-                     [UserId, ItemId, ProductId],
-                     _).
-
-delete_tesco_favourite(UserId, ItemId, ProductId):-
-        state_change('DELETE FROM tesco_favourite WHERE user_id = ? AND item_id = ? AND product_id = ?',
-                     [UserId, ItemId, ProductId],
-                     _).
-
-
-tesco_favourite(UserId, ItemId, ProductId):-
-        select('SELECT product_id FROM tesco_favourite WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [ProductId]).
-
-set_tesco_query_string(UserId, ItemId, QueryString):-
-        state_change('INSERT INTO tesco_query_string(user_id, item_id, query_string) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id) DO UPDATE SET query_string = ? WHERE user_id = ? AND item_id = ?',
-                     [UserId, ItemId, QueryString, QueryString, UserId, ItemId],
-                     _).
-
-tesco_query_string(UserId, ItemId, QueryString):-
-        select('SELECT query_string FROM tesco_query_string WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [QueryString]).
 
 current_list_item(UserId, ItemId):-
         select('SELECT item_id FROM list_entry WHERE user_id = ? AND deleted = 0', [UserId], [ItemId]).
@@ -242,3 +227,48 @@ map_store('tesco dundee', 'Tesco Riverside'):- !.
 map_store('morrisons St. Andrews', 'Morrisons St. Andrews'):- !.
 map_store('Matthew foods Dundee', 'Matthews Foods Dundee'):- !.
 map_store(X, X).
+
+
+
+
+/* Tesco */
+
+set_tesco_favourite(UserId, ItemId, ProductId):-
+        % We dont need timestamps because this always only happens on the server
+        state_change('INSERT INTO tesco_favourite(user_id, item_id, product_id) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id, product_id) DO NOTHING',
+                     [UserId, ItemId, ProductId],
+                     _).
+
+delete_tesco_favourite(UserId, ItemId, ProductId):-
+        state_change('DELETE FROM tesco_favourite WHERE user_id = ? AND item_id = ? AND product_id = ?',
+                     [UserId, ItemId, ProductId],
+                     _).
+
+
+tesco_favourite(UserId, ItemId, ProductId):-
+        select('SELECT product_id FROM tesco_favourite WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [ProductId]).
+
+set_tesco_query_string(UserId, ItemId, QueryString):-
+        state_change('INSERT INTO tesco_query_string(user_id, item_id, query_string) VALUES (?, ?, ?) ON CONFLICT(user_id, item_id) DO UPDATE SET query_string = ? WHERE user_id = ? AND item_id = ?',
+                     [UserId, ItemId, QueryString, QueryString, UserId, ItemId],
+                     _).
+
+tesco_query_string(UserId, ItemId, QueryString):-
+        select('SELECT query_string FROM tesco_query_string WHERE user_id = ? AND item_id = ?', [UserId, ItemId], [QueryString]).
+
+delete_tesco_cache(UserId, ItemId):-
+        state_change('DELETE FROM tesco_cache WHERE user_id = ? AND item_id = ?', [UserId, ItemId], _).
+
+cache_tesco_product(UserId, ItemId, ProductId, IsFavourite, ProductTitle, Image, Price, Offer, CSRF):-
+        get_time(TimestampBase),
+        Timestamp is integer(TimestampBase * 1000),
+        state_change('INSERT INTO tesco_cache(user_id, item_id, product_id, is_tesco_favourite, title, image, price, offer, csrf, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                     [UserId, ItemId, ProductId, IsFavourite, ProductTitle, Image, Price, Offer, CSRF, Timestamp],
+                     _).
+
+cached_tesco_products(UserId, ItemId, Products):-
+        findall(product(IsFavourite, ProductTitle, ProductId, Image, Price, Offer, CSRF),
+                select('SELECT is_tesco_favourite, title, product_id, image, price, offer, csrf FROM tesco_cache WHERE user_id = ? AND item_id = ?',
+                       [UserId, ItemId],
+                       [IsFavourite, ProductTitle, ProductId, Image, Price, Offer, CSRF]),
+                Products).

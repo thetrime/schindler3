@@ -39,6 +39,7 @@ ws(Websocket):-
                                client(ClientId, Websocket, UserId),
                                thread_send_message(ClientId, close))
         ; otherwise->
+            format(user_error, 'Login rejected for ~w~n', [UserId]),
             ws_send(Websocket, text('{"opcode":"login_denied"}'))
         ).
 

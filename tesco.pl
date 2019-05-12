@@ -18,7 +18,37 @@
 :-http_handler(root(set_query), set_query, []).
 :- use_module(library(http/http_client)).
 
-% Final step: modify the Schindler app to display a UIWebView. We need to register a handler for some Javascript function. When we run out of items to add, load a page that calls this function. Then we dismiss the popup. We may also want the popup to have a cancel button - in this case, we need to signal to the tesco module to retract all the pending items.
+:-initialization(start_tesco, program).
+
+start_tesco:-
+        message_queue_create(tesco_queue),
+        forall(between(1, 10, _),
+               thread_create(tesco_thread, _, [detached(true)])).
+
+tesco_thread:-
+        thread_get_message(tesco_queue, Task),
+        ( catch(tesco_task(Task),
+                Exception,
+                format(user_error, 'Error processing tesco task: ~w~n', [Exception]))->
+            true
+        ; format(user_error, 'Failure processing tesco task~n', [])
+        ),
+        tesco_thread.
+
+tesco_task(refresh_cache(UserId, SessionId, ItemId, ThreadId)):-
+        refresh_tesco_cache(UserId, SessionId, ItemId, _Products),
+        thread_send_message(ThreadId, cached).
+
+refresh_tesco_cache(UserId, SessionId, ItemId, Products):-
+        delete_tesco_cache(UserId, ItemId),
+        ( item_query_string(UserId, ItemId, QueryString)->
+            true
+        ; otherwise->
+            QueryString = ItemId
+        ),
+        tesco_products(UserId, QueryString, SessionId, Products),
+        forall(member(product(IsFavourite, ProductTitle, ProductId, Image, Price, Offer, CSRF), Products),
+               cache_tesco_product(UserId, ItemId, ProductId, IsFavourite, ProductTitle, Image, Price, Offer, CSRF)).
 
 :-dynamic(need_item/2).
 
@@ -64,13 +94,16 @@ set_query(Request):-
         memberchk('schindler_id'=ItemId, Data),
         memberchk('query'=Query, Data),
         set_query_string(UserId, ItemId, Query),
-        generate_next_page('Ok. Did that help?').
+        generate_next_page('Ok. Did that help?', recache).
 
 queue_item(UserId, ItemId):-
         ( need_item(UserId, ItemId)->
             true
         ; otherwise->
-            assertz(need_item(UserId, ItemId))
+            assertz(need_item(UserId, ItemId)),
+            thread_self(Self),
+            http_session_id(SessionId),
+            thread_send_message(tesco_queue, refresh_cache(UserId, SessionId, ItemId, Self))
         ).
 
 skip_item(Request):-
@@ -78,7 +111,7 @@ skip_item(Request):-
         http_session_data(user_id(UserId)),
         memberchk('schindler_id'=ItemId, Data),
         retract(need_item(UserId, ItemId)),
-        generate_next_page('No problem. Item has been left in your list').
+        generate_next_page('No problem. Item has been left in your list', use_cache).
 
 add_item(Request):-
         http_read_data(Request, Data, []),
@@ -109,7 +142,10 @@ add_item(Request):-
                                                                   '_csrf'=CSRF])),
                                                        request_header(origin='https://www.tesco.com'),
                                                        client(SessionId)]),
-                               true,
+                               ( StatusCode == 200 ->
+                                   true
+                               ; copy_stream_data(Stream, user_error)
+                               ),
                                close(Stream)),
             set_favourite(UserId, ItemId, ProductId),
             ( StatusCode == 200 ->
@@ -120,25 +156,37 @@ add_item(Request):-
                 format(atom(NextHeading), 'Hmm. There was a problem. ~w has been left on your list', [ItemId])
             )
         ),
-        generate_next_page(NextHeading).
+        generate_next_page(NextHeading, use_cache).
 
 tesco(Request):-
         generate_session(Request),
         http_session_data(user_id(UserId)),
         retractall(need_item(UserId, _)),
-        forall(current_list_item(UserId, ItemId),
-               queue_item(UserId, ItemId)),
-        generate_next_page('Hello, it\'s Tesco!').
+        findall(ItemId,
+                current_list_item(UserId, ItemId),
+                List),
 
-generate_next_page(Heading):-
+        % First make sure we are logged in
+        http_session_id(SessionId),
+        tesco_login(UserId, SessionId),
+
+        forall(member(ItemId, List),
+               queue_item(UserId, ItemId)),
+
+        % Then wait for all the items to be cached before proceeding
+        forall(member(_ItemId, List),
+               thread_get_message(cached)),
+        generate_next_page('Hello, it\'s Tesco!', use_cache).
+
+generate_next_page(Heading, WithCache):-
         http_session_data(user_id(UserId)),
+        http_session_id(SessionId),
         ( need_item(UserId, ItemId)->
-            ( item_query_string(UserId, ItemId, QueryString)->
-                true
+            ( fail, WithCache == use_cache ->
+                cached_tesco_products(UserId, ItemId, Products)
             ; otherwise->
-                QueryString = ItemId
+                refresh_tesco_cache(UserId, SessionId, ItemId, Products)
             ),
-            tesco_products(QueryString, Products),
             findall(FavouriteId,
                     item_favourite(UserId, ItemId, FavouriteId),
                     FavouriteIds),
@@ -149,17 +197,16 @@ generate_next_page(Heading):-
         ).
 
 
-tesco_products(QueryString, Products):-
-        http_session_id(SessionId),
-        tesco_login(SessionId),
+tesco_products(_UserId, QueryString, SessionId, Products):-
+        % This is done once when we start the process
+        %tesco_login(UserId, SessionId),
         setup_call_cleanup(http_open([protocol(https), host('www.tesco.com'), path('/groceries/en-GB/search'), search([query=QueryString, count=100])], Stream, [cacert_file(system(root_certificates)), client(SessionId)]),
                            tesco_extract_products(Stream, Products),
                            close(Stream)).
 
-tesco_login(SessionId):-
+tesco_login(UserId, SessionId):-
         ( tesco_tokens(SessionId, State, CSRF) ->
             % Need to log in
-            http_session_data(user_id(UserId)),
             tesco_credentials(UserId, Username, Password),
             setup_call_cleanup(http_open('https://secure.tesco.com/account/en-GB/login', Stream, [cacert_file(system(root_certificates)),
                                                                                                     post(form([username=Username, password=Password, state=State, '_csrf'=CSRF])),
@@ -206,7 +253,7 @@ generate_selection_page(Banner, ItemId, FavouriteIds, Products):-
                 FavouriteSection = element(div, [], ['While you have bought ', ItemId, ' before, none of the products you bought last time exist anymore :('])
             ; FavouriteProducts = [_]->
                 FavouriteSection = element(div, [], [element(span, [], ['Usually when you buy ', ItemId, ', you want this:']),
-                                                     element(div, [class=favouite_items], FavouriteItems)]),
+                                                     element(div, [class=favourite_items], FavouriteItems)]),
                 findall(Element,
                         element_in_products(ItemId, FavouriteProducts, true, Element),
                         FavouriteItems)
