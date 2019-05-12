@@ -277,10 +277,11 @@ class DataManager {
     private func handleUnsolicitedMessageOnMainThread(withOpcode opcode: String, data: [String:Any]) {
         print("Handling unsolicited message \(opcode) with data \(data)")
         switch (opcode) {
-            case "sync_response":
+            case "sync_message":
                 for submessage in data["messages"] as! [[String:Any]] {
                     handleUnsolicitedMessageOnMainThread(withOpcode: submessage["opcode"] as! String, data: submessage)
                 }
+            case "sync_complete":
                 setSync(to: data["timestamp"] as! Int64)
             case "item_exists":
                 let item = data["item_id"] as! String

@@ -270,6 +270,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     @objc func menuButtonPressed(button: UIButton) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        if let popoverController = alert.popoverPresentationController {
+            popoverController.barButtonItem = menuButton
+        }
         alert.addAction(UIAlertAction(title: "Force Sync", style: .default) { _ in
             if self.dataManager.missedMessages().count > 0 {
                 let alertController = UIAlertController(title: "Cannot Sync",
@@ -287,6 +290,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         alert.addAction(UIAlertAction(title: "Shop Tesco", style: .default) { _ in
             self.performSegue(withIdentifier:"ShopTesco", sender:nil);
+        })
+        
+        alert.addAction(UIAlertAction(title: "Build Info", style: .default) { _ in
+            let dialog = UIAlertController(title: "Schindler", message: AppDelegate.buildInfo, preferredStyle: .alert)
+            dialog.addAction(UIAlertAction(title: "Dismiss", style: .default))
+            self.present(dialog, animated: true, completion: nil)
         })
 
         alert.addAction(UIAlertAction(title: "Log Off", style: .default) { _ in
