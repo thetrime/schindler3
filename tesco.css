@@ -39,6 +39,14 @@ input
     width: 2em;
 }
 
+select
+{
+    font-size: 16pt;
+    width: 3em;
+    vertical-align: bottom;
+}
+
+
 input.query
 {
     font-size: 16pt;
@@ -67,7 +75,7 @@ input.query
 	color:#ffffff;
 	font-family:Arial;
 	font-size:16px;
-	padding:10px 37px;
+        padding:8px 37px;
 	text-decoration:none;
 	text-shadow:0px 1px 0px #283966;
 }

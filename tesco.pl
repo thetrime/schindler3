@@ -312,11 +312,17 @@ element_in_products(ItemId, Products, CanUnfavourite, Element):-
         ; otherwise->
             OfferSpan = element(span, [class=offer], [' (', Offer, ')'])
         ),
+        findall(element(option, [value=NAtom], [NAtom]),
+                ( between(1, 12, N),
+                  atom_number(NAtom, N)
+                ),
+                Options),
         Element = element(div, [class=product], [element(div, [class=product_image], [element(img, [src=Image], [])|Tail]),
                                                  ProductTitle,
                                                  element(div, [class=price], ['  £', Price]),
                                                  OfferSpan,
-                                                 element(form, [action='/add_item', method='POST'], [element(input, [value='', type=text, pattern='\\d*', name=newValue], []),
+                                                 element(form, [action='/add_item', method='POST'], [%element(input, [value='', type=text, pattern='\\d*', name=newValue], []),
+                                                                                                     element(select, [name=newValue, class=x], Options),
                                                                                                      element(input, [type=hidden, name='id', value=ProductId], []),
                                                                                                      element(input, [type=hidden, name='_csrf', value=CSRF], []),
                                                                                                      element(input, [type=hidden, name='schindler_id', value=ItemId], []),
