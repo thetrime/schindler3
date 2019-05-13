@@ -4,7 +4,22 @@ body
     text-align: center;
     font-family: Arial;
     font-size: 16pt;
+    margin: 0;
 }
+
+h2
+{
+    padding: 5px;
+    margin: 0;
+    font-size: 12pt;
+}
+
+h3
+{
+    padding: 5px;
+    margin: 0;
+}
+
 
 .other_items
 {
@@ -22,9 +37,10 @@ body
 
 .product
 {
+    max-width: calc(50% - 10px);
     width: 225px;
     text-align: center;
-    margin: 10px;
+    margin: 3px;
 }
 
 .offer
@@ -46,12 +62,37 @@ select
     vertical-align: bottom;
 }
 
+.buttons
+{
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
 
 input.query
 {
     font-size: 16pt;
     width: 95%;
 }
+
+
+.skipform
+{
+    display: inline;
+}
+
+.setqueryform
+{
+    display: none;
+}
+
+h3
+{
+    margin: 5px;
+}
+
+
+
 
 
 .fancybutton {
@@ -109,3 +150,9 @@ input.query
 .product_image form {
     display: inline
 }
+
+.product_image img
+{
+    width: 100%;
+}
+

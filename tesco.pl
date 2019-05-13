@@ -12,6 +12,7 @@
 :-ensure_loaded(credentials).
 
 :-http_handler(root(tesco), tesco, []).
+:-http_handler(root(tesco_test), tesco_test, []).
 :-http_handler(root('tesco.css'), http_reply_file('tesco.css', []), []).
 :-http_handler(root(add_item), add_item, []).
 :-http_handler(root(unfavourite), unfavourite, []).
@@ -184,6 +185,22 @@ tesco(Request):-
                thread_get_message(cached)),
         generate_next_page('Hello, it\'s Tesco!', use_cache).
 
+% This will just pull the results from the local database without updating it
+tesco_test(Request):-
+        generate_session(Request),
+        http_session_data(user_id(UserId)),
+        retractall(need_item(UserId, _)),
+        findall(ItemId,
+                current_list_item(UserId, ItemId),
+                List),
+        forall(member(ItemId, List),
+               ( need_item(UserId, ItemId)->
+                   true
+               ; assertz(need_item(UserId, ItemId))
+               )),
+
+        generate_next_page('Hello, it\'s Tesco!', use_cache).
+
 generate_next_page(Heading, WithCache):-
         http_session_data(user_id(UserId)),
         http_session_id(SessionId),
@@ -204,8 +221,6 @@ generate_next_page(Heading, WithCache):-
 
 
 tesco_products(_UserId, QueryString, SessionId, Products):-
-        % This is done once when we start the process
-        %tesco_login(UserId, SessionId),
         setup_call_cleanup(http_open([protocol(https), host('www.tesco.com'), path('/groceries/en-GB/search'), search([query=QueryString, count=100])], Stream, [cacert_file(system(root_certificates)), client(SessionId)]),
                            tesco_extract_products(Stream, Products),
                            close(Stream)).
@@ -224,17 +239,10 @@ tesco_login(UserId, SessionId):-
             true
         ).
 
-cache_html(HTML, Stub):-
-        format(atom(Filename), '/tmp/cached_~w.html', [Stub]),
-        setup_call_cleanup(open(Filename, write, Stream),
-                           html_write(Stream, HTML, []),
-                           close(Stream)).
-
 tesco_tokens(SessionId, State, CSRF):-
         setup_call_cleanup(http_open('https://secure.tesco.com/account/en-GB/login', Stream, [cacert_file(system(root_certificates)), client(SessionId)]),
                            load_html(Stream, HTML, []),
                            close(Stream)),
-        %cache_html(HTML, token),
         xpath(HTML, //input(@id='state'), element(_, StateAttributes, _)),
         xpath(HTML, //input(@id='_csrf'), element(_, CSRFAttributes, _)),
         memberchk(value=State, StateAttributes),
@@ -243,7 +251,6 @@ tesco_tokens(SessionId, State, CSRF):-
 
 tesco_extract_products(Stream, Products):-
         load_html(stream(Stream), HTML, []),
-        cache_html(HTML, products),
         findall(product(IsFavourite, ProductTitle, ProductId, Image, Price, Offer, CSRF),
                 tesco_product(HTML, ProductTitle, ProductId, Image, IsFavourite, Price, Offer, CSRF),
                 Products).
@@ -251,7 +258,7 @@ tesco_extract_products(Stream, Products):-
 generate_selection_page(Banner, ItemId, FavouriteIds, Products):-
         ( FavouriteIds == [] ->
             FavouriteProducts = [],
-            FavouriteSection = element(div, [], ['You have never bought ', ItemId, ' before']),
+            FavouriteSection = element(div, [], []),
             NonFavouriteProducts = Products
         ; otherwise->
             select_favourite_products(Products, FavouriteIds, FavouriteProducts, NonFavouriteProducts),
@@ -283,15 +290,15 @@ generate_selection_page(Banner, ItemId, FavouriteIds, Products):-
         html_write(current_output, [element(html, [], [element(head, [], [element(link, [rel=stylesheet, type='text/css', href='tesco.css'], []),
                                                                           element(meta, [name=viewport, content='width=device-width, initial-scale=1.0'], [])]),
                                                        element(body, [], [element(h2, [], [Banner]),
-                                                                          element(h3, [], ['You are trying to add ', ItemId, ' to your Tesco basket. Please pick from the following options:']),
-                                                                          element(form, [action='/skip_item', method=post], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
-                                                                                                                             element(button, [class=fancybutton], ['Skip adding ', ItemId, ' to this shop and leave it in Schindler'])]),
-                                                                          FavouriteSection,
-                                                                          element(form, [action='/set_query', method=post], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
-                                                                                                                             element(input, [class=query, name=query], []),
-                                                                                                                             element(button, [class=fancybutton], ['When looking for ', ItemId, ', search for this instead'])]),
-                                                                          element(hr, [], []),
-                                                                          OtherSection])])], []).
+                                                                          element(div, [class=panel], [element(h3, [], ['Find: ', ItemId]),
+                                                                                                       element(div, [class=buttons], [element(form, [class=skipform, action='/skip_item', method=post], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
+                                                                                                                                                                                                         element(button, [class=fancybutton], ['Skip'])]),
+                                                                                                                                      element(button, [class=fancybutton, onclick='if (document.getElementById("query").value = prompt("What should I search for instead, then?")) document.getElementById("set_query").submit();'], ['None of these'])]),
+                                                                                                       FavouriteSection,
+                                                                                                       element(form, [action='/set_query', method=post, class=setqueryform, id=set_query], [element(input, [type=hidden, name=schindler_id, value=ItemId], []),
+                                                                                                                                                                                            element(input, [id=query, name=query], [])]),
+                                                                                                       element(hr, [], []),
+                                                                                                       OtherSection])])])], []).
 
 
 product_id(product(_IsFavourite, _ProductTitle, ProductId, _Image, _Price, _Offer, _CSRF), ProductId).
@@ -321,8 +328,7 @@ element_in_products(ItemId, Products, CanUnfavourite, Element):-
                                                  ProductTitle,
                                                  element(div, [class=price], ['  £', Price]),
                                                  OfferSpan,
-                                                 element(form, [action='/add_item', method='POST'], [%element(input, [value='', type=text, pattern='\\d*', name=newValue], []),
-                                                                                                     element(select, [name=newValue, class=x], Options),
+                                                 element(form, [action='/add_item', method='POST'], [element(select, [name=newValue, class=x], Options),
                                                                                                      element(input, [type=hidden, name='id', value=ProductId], []),
                                                                                                      element(input, [type=hidden, name='_csrf', value=CSRF], []),
                                                                                                      element(input, [type=hidden, name='schindler_id', value=ItemId], []),
