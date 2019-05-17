@@ -87,21 +87,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
         // Sort this so that items are sorted alphanumerically. Unknown must appear at the top if the filter is filled in since we will have a new item to edit and we want it to be the very first item
         // If the filter is empty then we want Unknown to be always at the end
-        // FIXME: This does not work, but I have not yet worked out why. It computes the right order but this messes up table updates something spectacular
-        /*
+        // Changing this is risky - Diff is pretty naive and will not work well if the lists are not ordered using the same comparator
+        
         let newSections = newLocations.keys.sorted(by: { (s1, s2) in
-            if s2 == "Unknown" {
-                return filter == "";
-            } else if s1 == "Unknown" {
-                return filter != "";
-            } else {
-                print ("\(s1) vs \(s2) -> \(s1.localizedStandardCompare(s2) == ComparisonResult.orderedAscending)")
                 return s1.localizedStandardCompare(s2) == ComparisonResult.orderedAscending
-            }
         })
-        print("\(newLocations.keys) -> \(newSections)")
-        */
-        let newSections = newLocations.keys.sorted();
+        
+        //let newSections = newLocations.keys.sorted();
         
         // Table update is hard to get your head around. The general idea is:
         // * First all the row deletes are processed

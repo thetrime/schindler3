@@ -8,6 +8,9 @@
 
 import Foundation
 
+// It is CRITICAL that left and right are both sorted (using the same comparator!) for this to work
+// Here we assume that localizedStandardCompare has been applied
+
 func changesBetween(_ left: [String], and right: [String]) -> (deletes: IndexSet, inserts: IndexSet) {
     var deletes = IndexSet();
     var inserts = IndexSet();
@@ -28,17 +31,19 @@ func changesBetween(_ left: [String], and right: [String]) -> (deletes: IndexSet
             deletes.insert(index0);
             index0+=1;
             s0 = i0.next();
-        } else if (s0! < s1!) {
+        } else if s0!.localizedStandardCompare(s1!) == ComparisonResult.orderedAscending {
+//        } else if (s0! > s1!) {
             // s0 has been deleted
             deletes.insert(index0);
             index0+=1;
             s0 = i0.next();
-        } else if (s0! > s1!) {
+//        } else if (s0! < s1!) {
+         } else if s0!.localizedStandardCompare(s1!) == ComparisonResult.orderedDescending {
             // s1 has been added
             inserts.insert(index1);
             index1+=1;
             s1 = i1.next();
-        } else if (s0! == s1!) {
+        } else {
             index0+=1;
             index1+=1;
             s0 = i0.next();
