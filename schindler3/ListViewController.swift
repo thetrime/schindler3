@@ -55,7 +55,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         // The list has a temporary item if the search bar is not empty and the thing in the search bar doesn't match anything in the list
         let hasTemporaryItem = filter != "" && !dataManager.itemExists(filter);
         for item in hasTemporaryItem ? dataManager.getItems() + [temporaryItem] : dataManager.getItems() {
-            if (filter != "" && !item.lowercased().contains(filter)) {
+            if (filter != "" && !item.lowercased().starts(with: filter)) {
                 // The filter is not empty and this item does not match the filter. Do not include it.
                 continue;
             }
@@ -63,7 +63,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
                 // The filter IS empty so we only want to display items actually on the current list
                 continue;
             }
-            if (deferredItems.contains(item)) {
+            if (filter == "" && deferredItems.contains(item)) {
                 // The item is deferred. Skip it
                 continue
             }
@@ -85,9 +85,24 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         for (location, itemList) in newLocations {
             newLocations[location] = itemList.sorted(by: <);
         }
-        // FIXME: Sort this so that Unknown is always at the end, and that items are sorted alphanumerically
+        // Sort this so that items are sorted alphanumerically. Unknown must appear at the top if the filter is filled in since we will have a new item to edit and we want it to be the very first item
+        // If the filter is empty then we want Unknown to be always at the end
+        // FIXME: This does not work, but I have not yet worked out why. It computes the right order but this messes up table updates something spectacular
+        /*
+        let newSections = newLocations.keys.sorted(by: { (s1, s2) in
+            if s2 == "Unknown" {
+                return filter == "";
+            } else if s1 == "Unknown" {
+                return filter != "";
+            } else {
+                print ("\(s1) vs \(s2) -> \(s1.localizedStandardCompare(s2) == ComparisonResult.orderedAscending)")
+                return s1.localizedStandardCompare(s2) == ComparisonResult.orderedAscending
+            }
+        })
+        print("\(newLocations.keys) -> \(newSections)")
+        */
         let newSections = newLocations.keys.sorted();
-
+        
         // Table update is hard to get your head around. The general idea is:
         // * First all the row deletes are processed
         // * Next, all the section deletes are processed

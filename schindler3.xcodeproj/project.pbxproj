@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8A22AC878610171A0DDB2B41 /* Pods_schindler3.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */; };
 		F40185EE203B1DAF004107FC /* ListButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40185ED203B1DAF004107FC /* ListButton.swift */; };
 		F46D4D77227EB8A6009858B4 /* TescoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46D4D76227EB8A6009858B4 /* TescoViewController.swift */; };
 		F46D4D79227EBA50009858B4 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F46D4D78227EBA50009858B4 /* WebKit.framework */; };
+		F477CB45228C73460090AE5D /* Starscream.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F477CB42228C73110090AE5D /* Starscream.framework */; };
+		F477CB47228D30CC0090AE5D /* Starscream.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = F477CB42228C73110090AE5D /* Starscream.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F4B17EF62041AE3100EC27ED /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EF52041AE3100EC27ED /* DataManager.swift */; };
 		F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */; };
 		F4B17EFB2041BE8F00EC27ED /* SQLiteDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */; };
@@ -30,13 +31,42 @@
 		F4EB81CA203C51DD003625D0 /* Diff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EB81C9203C51DD003625D0 /* Diff.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		F477CB41228C73110090AE5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F477CB3C228C73110090AE5D /* Starscream.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 33CCF0921F5DDC030099B092;
+			remoteInfo = Starscream;
+		};
+		F477CB43228C73110090AE5D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F477CB3C228C73110090AE5D /* Starscream.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 335FA2021F5DF71D00F6D2EC;
+			remoteInfo = "Starscream Tests";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F477CB46228D30B30090AE5D /* Copy Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F477CB47228D30CC0090AE5D /* Starscream.framework in Copy Frameworks */,
+			);
+			name = "Copy Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-schindler3.debug.xcconfig"; path = "Target Support Files/Pods-schindler3/Pods-schindler3.debug.xcconfig"; sourceTree = "<group>"; };
-		BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_schindler3.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-schindler3.release.xcconfig"; path = "Target Support Files/Pods-schindler3/Pods-schindler3.release.xcconfig"; sourceTree = "<group>"; };
 		F40185ED203B1DAF004107FC /* ListButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListButton.swift; sourceTree = "<group>"; };
 		F46D4D76227EB8A6009858B4 /* TescoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TescoViewController.swift; sourceTree = "<group>"; };
 		F46D4D78227EBA50009858B4 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		F477CB3C228C73110090AE5D /* Starscream.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Starscream.xcodeproj; path = Starscream/Starscream.xcodeproj; sourceTree = "<group>"; };
 		F4B17EF52041AE3100EC27ED /* DataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		F4B17EFA2041BE8F00EC27ED /* SQLiteDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDatabase.swift; sourceTree = "<group>"; };
@@ -63,22 +93,22 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F477CB45228C73460090AE5D /* Starscream.framework in Frameworks */,
 				F46D4D79227EBA50009858B4 /* WebKit.framework in Frameworks */,
 				F4B17EF92041BAFA00EC27ED /* libsqlite3.tbd in Frameworks */,
-				8A22AC878610171A0DDB2B41 /* Pods_schindler3.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		76579E1D07078E219C50480D /* Pods */ = {
+		F477CB3D228C73110090AE5D /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */,
-				C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */,
+				F477CB42228C73110090AE5D /* Starscream.framework */,
+				F477CB44228C73110090AE5D /* Starscream Tests.xctest */,
 			);
-			path = Pods;
+			name = Products;
 			sourceTree = "<group>";
 		};
 		F4B17EF72041BAF900EC27ED /* Frameworks */ = {
@@ -86,7 +116,6 @@
 			children = (
 				F46D4D78227EBA50009858B4 /* WebKit.framework */,
 				F4B17EF82041BAFA00EC27ED /* libsqlite3.tbd */,
-				BFCE24335C16AC185A64C53D /* Pods_schindler3.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -94,11 +123,11 @@
 		F4D665D7203729280017E0CA = {
 			isa = PBXGroup;
 			children = (
+				F477CB3C228C73110090AE5D /* Starscream.xcodeproj */,
 				F4C23FB622630D4A00FDBF21 /* schindlerx.strangled.net.der */,
 				F4D665E2203729280017E0CA /* schindler3 */,
 				F4D665E1203729280017E0CA /* Products */,
 				F4B17EF72041BAF900EC27ED /* Frameworks */,
-				76579E1D07078E219C50480D /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -142,11 +171,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F4D665F2203729280017E0CA /* Build configuration list for PBXNativeTarget "schindler3" */;
 			buildPhases = (
-				8425DEA50CE5CF1679982461 /* [CP] Check Pods Manifest.lock */,
 				F4D665DC203729280017E0CA /* Sources */,
 				F4D665DD203729280017E0CA /* Frameworks */,
 				F4D665DE203729280017E0CA /* Resources */,
-				CC7842A5B67DB177EB579EF9 /* [CP] Embed Pods Frameworks */,
+				F477CB46228D30B30090AE5D /* Copy Frameworks */,
 			);
 			buildRules = (
 			);
@@ -184,12 +212,35 @@
 			mainGroup = F4D665D7203729280017E0CA;
 			productRefGroup = F4D665E1203729280017E0CA /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = F477CB3D228C73110090AE5D /* Products */;
+					ProjectRef = F477CB3C228C73110090AE5D /* Starscream.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				F4D665DF203729280017E0CA /* schindler3 */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		F477CB42228C73110090AE5D /* Starscream.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Starscream.framework;
+			remoteRef = F477CB41228C73110090AE5D /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F477CB44228C73110090AE5D /* Starscream Tests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "Starscream Tests.xctest";
+			remoteRef = F477CB43228C73110090AE5D /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		F4D665DE203729280017E0CA /* Resources */ = {
@@ -204,53 +255,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		8425DEA50CE5CF1679982461 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-schindler3-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		CC7842A5B67DB177EB579EF9 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-schindler3/Pods-schindler3-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/Starscream/Starscream.framework",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Starscream.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-schindler3/Pods-schindler3-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F4D665DC203729280017E0CA /* Sources */ = {
@@ -409,7 +413,6 @@
 		};
 		F4D665F3203729280017E0CA /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 841330C41EC8B8C8787FB6D1 /* Pods-schindler3.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -425,7 +428,6 @@
 		};
 		F4D665F4203729280017E0CA /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C8E63085B01A37F11C3700CE /* Pods-schindler3.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;

@@ -22,9 +22,9 @@ class DataManager {
     private var net: NetworkManager!;
     var delegate: ListViewController?;
     
-    var userId: String = "matt";
-    var password: String = "notverysecretatall";
-    
+    var userId: String = "";
+    var password: String = "";
+
     var currentStore: Store! {
         didSet {
             print("setting navigation title");
@@ -35,8 +35,13 @@ class DataManager {
     func determineStore(near location: (Double, Double)) {
         let newStore = findStoreClosestTo(location);
         print("moving to \(newStore) from \(currentStore.name)")
-        if (newStore != currentStore.name) {
+        let deferredStore = UserDefaults.standard.string(forKey:"deferred_store")
+        if (newStore != deferredStore) {
             clearDeferredItems()
+            UserDefaults.standard.set(nil, forKey: "deferred_store")
+        }
+        if (newStore != currentStore.name) {
+
             print("Deferrals cleared")
             currentStore = loadStoreNamed(newStore);
         }
@@ -197,6 +202,7 @@ class DataManager {
     
     func deferItem(item: String) {
         db.insert(to:"deferred_items", values: ["item":item]);
+        UserDefaults.standard.set(currentStore.name, forKey: "deferred_store")
         // No need to tell the server about this
     }
     
