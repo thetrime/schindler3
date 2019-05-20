@@ -98,13 +98,13 @@ handle_message({null}, hello, _):-
                                         checkpoint:{null}}).
 handle_message(Key, hello, Message):-
         Checkpoint = Message.checkpoint,
-        checkpoint(Key, NewCheckpoint),
+        ??checkpoint(Key, NewCheckpoint),
         ( Checkpoint == NewCheckpoint ->
             ws_send_message(Key, ohai_again, _{})
         ; otherwise->
-            location_information(Key, Locations),
-            store_information(Key, Stores),
-            item_information(Key, Items),
+            ??location_information(Key, Locations),
+            ??store_information(Key, Stores),
+            ??item_information(Key, Items),
             aisle_information(Key, Aisles),
             list_information(Key, List),
             ws_send_message(Key, ohai, _{stores:Stores,
@@ -252,6 +252,10 @@ item(UserId, ItemId):-
 
 checkpoint(UserId, Checkpoint):-
         % This seems extremely expensive
-        aggregate_all(max(MessageTimestamp),
-                      sync_message(UserId, _, _, MessageTimestamp),
-                      Checkpoint).
+        ( aggregate_all(max(MessageTimestamp),
+                        sync_message(UserId, _, _, MessageTimestamp),
+                        Checkpoint)->
+            true
+        ; otherwise->
+            Checkpoint = 0
+        ).
