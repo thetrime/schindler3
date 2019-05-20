@@ -253,7 +253,7 @@ item(UserId, ItemId):-
 checkpoint(UserId, Checkpoint):-
         % This seems extremely expensive
         ( aggregate_all(max(MessageTimestamp),
-                        sync_message(UserId, _, _, MessageTimestamp),
+                        sync_message(UserId, 0, _, MessageTimestamp),
                         Checkpoint)->
             true
         ; otherwise->
