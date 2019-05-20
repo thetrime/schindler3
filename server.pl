@@ -7,13 +7,14 @@
 :- use_module(library(http/http_ssl_plugin)).
 
 
-:- http_handler(root(ws), http_upgrade_to_websocket(ws, []), [spawn([])]).
+:- http_handler(root(ws3), http_upgrade_to_websocket(ws3, []), [spawn([])]).
 :- http_handler(root('.well-known'), acme, [prefix, priority(1)]).
 :-initialization(start_server, program).
 
 :-ensure_loaded(testing).
 :-ensure_loaded(database).
 :-ensure_loaded(tesco).
+:-ensure_loaded(schindler2/schindler2).
 
 :-dynamic(listener/2).
 
@@ -22,7 +23,7 @@ acme(Request):-
         format(atom(ActualPath), 'acme~w', [Path]),
         http_reply_file(ActualPath, [], Request).
 
-ws(Websocket):-
+ws3(Websocket):-
         format(user_error, 'New connection received~n', []),
         set_stream(Websocket, encoding(utf8)),
         ws_receive(Websocket, Message, [format(json), value_string_as(atom)]),

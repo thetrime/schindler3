@@ -38,7 +38,7 @@ class NetworkManager : NSObject, WebSocketDelegate {
     init(withDataManager: DataManager) {
         dataManager = withDataManager;
         super.init();
-        let url = URL(string: "\(socketProtocol)://\(NetworkManager.hostname):\(NetworkManager.port)/ws")
+        let url = URL(string: "\(socketProtocol)://\(NetworkManager.hostname):\(NetworkManager.port)/ws3")
         socket = WebSocket(url: url!)
         socket.delegate = self
         if socketProtocol == "wss" {
