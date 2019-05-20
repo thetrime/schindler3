@@ -304,6 +304,11 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             dialog.addAction(UIAlertAction(title: "Dismiss", style: .default))
             self.present(dialog, animated: true, completion: nil)
         })
+        
+        alert.addAction(UIAlertAction(title: "Reset Deferred Items", style: .default) { _ in
+            self.updateTable(after:) {self.dataManager.clearDeferredItems()}
+        })
+
 
         alert.addAction(UIAlertAction(title: "Log Off", style: .default) { _ in
             UserDefaults.standard.set(nil, forKey: "user_id")
@@ -312,8 +317,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         })
         
         self.present(alert, animated: true) {
-            alert.view.superview?.isUserInteractionEnabled = true
-            alert.view.superview?.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.alertControllerBackgroundTapped)))
+            alert.view.superview?.subviews[1].isUserInteractionEnabled = true
+            alert.view.superview?.subviews[1].addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.alertControllerBackgroundTapped)))
         }
     }
 
