@@ -317,8 +317,10 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         })
         
         self.present(alert, animated: true) {
-            alert.view.superview?.subviews[1].isUserInteractionEnabled = true
-            alert.view.superview?.subviews[1].addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.alertControllerBackgroundTapped)))
+            for subview in alert.view.superview!.subviews as [UIView] {
+                subview.isUserInteractionEnabled = true
+                subview.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.alertControllerBackgroundTapped)))
+            }
         }
     }
 
