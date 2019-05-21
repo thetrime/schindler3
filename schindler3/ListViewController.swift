@@ -160,6 +160,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
             print("Location is not allowed");
         }
         searchBar.delegate = self;
+        searchBar.autocapitalizationType = .none
+        searchBar.autocorrectionType = .yes
         setLocationButton.target = self;
         setLocationButton.action = #selector(ListViewController.setLocationButtonPressed(button:));
         menuButton.target = self;
