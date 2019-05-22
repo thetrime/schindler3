@@ -1,0 +1,2 @@
+Main things:
+   * Handle login rejections properly. Currently we just ignore them and continually fail to sync. It might be reasonable to have a permanently-offline version?
