@@ -1,3 +1,7 @@
 credentials.pl
 devices
 *~
+deploy.stderr
+deploy.stdout
+\#*
+key.pem
