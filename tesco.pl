@@ -221,8 +221,20 @@ generate_next_page(Heading, WithCache):-
 
 
 tesco_products(_UserId, QueryString, SessionId, Products):-
-        setup_call_cleanup(http_open([protocol(https), host('www.tesco.com'), path('/groceries/en-GB/search'), search([query=QueryString, count=100])], Stream, [cacert_file(system(root_certificates)), client(SessionId)]),
-                           tesco_extract_products(Stream, Products),
+        setup_call_cleanup(http_open([protocol(https), host('www.tesco.com'), path('/groceries/en-GB/search'), search([query=QueryString, count=40])],
+                                     Stream,
+                                     [cacert_file(system(root_certificates)),
+                                      client(SessionId),
+                                      status_code(Status)]),
+                           ( Status == 200 ->
+                               tesco_extract_products(Stream, Products)
+                           ; Status = 404 ->
+                               format(user_error, 'No products found for ~w~n', [QueryString]),
+                               Products = []
+                           ; otherwise->
+                               format(user_error, 'Error while searching for ~w (~w)~n', [QueryString, Status]),
+                               Products = []
+                           ),
                            close(Stream)).
 
 tesco_login(UserId, SessionId):-
