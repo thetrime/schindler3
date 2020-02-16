@@ -10,6 +10,7 @@
 
 :-ensure_loaded(testing).
 :-ensure_loaded(credentials).
+:-ensure_loaded(database).
 
 :-http_handler(root(tesco), tesco, []).
 :-http_handler(root(tesco_test), tesco_test, []).
@@ -356,7 +357,7 @@ element_in_products(ItemId, Products, CanUnfavourite, Element):-
 
 tesco_product(HTML, ProductTitle, ProductId, Image, IsFavourite, Price, Offer, CSRF):-
         xpath(HTML, //div(@'data-auto'='product-tile'), Element),
-        ( xpath(Element, //a(@class='product-tile--title product-tile--browsable'), element(a, _, [ProductTitle]))->
+        ( xpath(Element, //a(@'data-auto'='product-tile--title'), element(a, _, [ProductTitle]))->
             true
         ; otherwise->
             format(user_error, 'No product title?~n', []),
