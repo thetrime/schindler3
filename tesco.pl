@@ -206,7 +206,7 @@ generate_next_page(Heading, WithCache):-
         http_session_data(user_id(UserId)),
         http_session_id(SessionId),
         ( need_item(UserId, ItemId)->
-            ( fail, WithCache == use_cache ->
+            ( WithCache == use_cache ->
                 cached_tesco_products(UserId, ItemId, Products)
             ; otherwise->
                 refresh_tesco_cache(UserId, SessionId, ItemId, Products)
