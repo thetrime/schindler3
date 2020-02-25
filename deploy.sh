@@ -3,7 +3,12 @@
 # Move to the right directory
 cd `dirname "$0"`
 
-DEVICES=`cat devices`
+if [ "$1" == "" ]; then
+    DEVICES=`cat devices`
+else
+    DEVICES=$1
+fi
+
 APPPATH=`xcodebuild -workspace 'Schindler3.xcworkspace' -scheme "schindler3" -showBuildSettings | grep BUILD_ROOT | sed 's/[ ]*BUILD_ROOT = //'`/Debug-iphoneos/schindler3.app
 BUILD=`date "+%Y-%m-%d"`
 
